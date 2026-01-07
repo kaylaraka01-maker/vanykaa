@@ -206,6 +206,27 @@ body > * {
         }
     </style>
 </head>
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+      import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyBITh_0rVFRehYcZNcfEpohOToNmqg35X0",
+        authDomain: "rerepdanraka.firebaseapp.com",
+        projectId: "rerepdanraka",
+        storageBucket: "rerepdanraka.appspot.com",
+        messagingSenderId: "108042728360",
+        appId: "1:108042728360:web:e01abfb5d22ea4121e639d",
+        measurementId: "G-YENBRLED8J"
+          };
+
+      const app = initializeApp(firebaseConfig);
+      const analytics = getAnalytics(app);
+      const db = getFirestore(app);
+
+      console.log("firebase siap 🔥");
+    </script>
 <body class="light">
 
     <div id="modal-overlay" onclick="closeModal()">
@@ -812,3 +833,4 @@ body > * {
 </body>
 
 </html>
+
