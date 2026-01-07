@@ -206,39 +206,36 @@ body > * {
         }
     </style>
 </head>
-    <script type="module">
-/* 1️⃣ IMPORT (JANGAN DIUBAH) */
+   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      setDoc,
-      onSnapshot
+    import { 
+        getFirestore, doc, getDoc, setDoc, onSnapshot, updateDoc, arrayUnion 
     } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-    /* 2️⃣ CONFIG */
     const firebaseConfig = {
-      apiKey: "AIzaSyClRS-JtlugNlhoRWlI_Z11hmopsdCK0eI",
-      authDomain: "vanykaa-fdf58.firebaseapp.com",
-      projectId: "vanykaa-fdf58",
-      storageBucket: "vanykaa-fdf58.firebasestorage.app",
-      messagingSenderId: "586577084670",
-      appId: "1:586577084670:web:30a55ad5613e271e7925af",
-      measurementId: "G-VEG0DWD3DG"
+        apiKey: "AIzaSyClRS-JtlugNlhoRWlI_Z11hmopsdCK0eI",
+        authDomain: "vanykaa-fdf58.firebaseapp.com",
+        projectId: "vanykaa-fdf58",
+        storageBucket: "vanykaa-fdf58.firebasestorage.app",
+        messagingSenderId: "586577084670",
+        appId: "1:586577084670:web:30a55ad5613e271e7925af",
+        measurementId: "G-VEG0DWD3DG"
     };
-    
-/* 3️⃣ INIT FIREBASE (URUTAN WAJIB) */
+
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const db = getFirestore(app);
 
-    console.log("Firebase siap 🔥");
+    // EXPOSE KE GLOBAL WINDOW
+    window.db = db;
+    window.doc = doc;
+    window.getDoc = getDoc;
+    window.setDoc = setDoc;
+    window.onSnapshot = onSnapshot;
+    window.updateDoc = updateDoc;
+    window.arrayUnion = arrayUnion;
 
-    /* 4️⃣ JANGAN TUTUP SCRIPT DI SINI */
-    /* FUNCTION LAIN BOLEH DI BAWAH */
-    </script>
+    console.log("Firebase Terkoneksi & Siap 🔥");
+</script>
 <body class="light">
 
     <div id="modal-overlay" onclick="closeModal()">
@@ -743,80 +740,77 @@ body > * {
         }
 
   window.likeItem = async function (id) {
-  if (!activeUser) return alert("Login dulu");
+    if (!activeUser) return alert("Isi nama dulu di depan!");
+    const ref = window.doc(window.db, "interactions", id);
+    const snap = await window.getDoc(ref);
 
-  const ref = doc(db, "interactions", id);
-  const snap = await getDoc(ref);
-
-  let data = snap.exists()
-    ? snap.data()
-    : { liked: 0, usersLiked: [], comments: [] };
-
-  const i = data.usersLiked.indexOf(activeUser);
-
-  if (i === -1) {
-    data.liked++;
-    data.usersLiked.push(activeUser);
-  } else {
-    data.liked--;
-    data.usersLiked.splice(i, 1);
-  }
-
-  await setDoc(ref, data);
-};
+    if (!snap.exists()) {
+        await window.setDoc(ref, { liked: 1, usersLiked: [activeUser], comments: [] });
+    } else {
+        const data = snap.data();
+        const hasLiked = data.usersLiked && data.usersLiked.includes(activeUser);
         
-window.addComment = async function (id) {
-  if (!activeUser) return alert("Login dulu");
-
-  const input = document.getElementById(`in-${id}`);
-  if (!input || !input.value.trim()) return;
-
-  const ref = doc(db, "interactions", id);
-  const snap = await getDoc(ref);
-
-  let data = snap.exists()
-    ? snap.data()
-    : { liked: 0, usersLiked: [], comments: [] };
-
-  data.comments.push({
-    user: activeUser,
-    text: input.value
-  });
-
-  await setDoc(ref, data);
-  input.value = "";
+        if (!hasLiked) {
+            await window.updateDoc(ref, {
+                liked: (data.liked || 0) + 1,
+                usersLiked: window.arrayUnion(activeUser)
+            });
+        } else {
+            // Logic Unlike
+            const newUsers = data.usersLiked.filter(u => u !== activeUser);
+            await window.updateDoc(ref, {
+                liked: Math.max(0, (data.liked || 1) - 1),
+                usersLiked: newUsers
+            });
+        }
+    }
 };
 
-        function listenItem(id, type) {
-  const ref = doc(db, "interactions", id);
+window.addComment = async function (id) {
+    const input = document.getElementById(`in-${id}`);
+    const text = input.value.trim();
+    if (!activeUser || !text) return;
 
-  onSnapshot(ref, (snap) => {
-    if (!snap.exists()) return;
+    const ref = window.doc(window.db, "interactions", id);
+    const commentData = { user: activeUser, text: text, time: Date.now() };
 
-    const data = snap.data();
-
-    // UPDATE LIKE
-    const likeBtn = document.getElementById(`like-${id}`);
-    if (likeBtn) {
-      likeBtn.innerText = `❤️ ${data.liked}`;
-      likeBtn.classList.toggle(
-        'text-pink-500',
-        data.usersLiked.includes(activeUser)
-      );
-      likeBtn.onclick = () => likeItem(id);
+    const snap = await window.getDoc(ref);
+    if (!snap.exists()) {
+        await window.setDoc(ref, { liked: 0, usersLiked: [], comments: [commentData] });
+    } else {
+        await window.updateDoc(ref, {
+            comments: window.arrayUnion(commentData)
+        });
     }
+    input.value = "";
+};
+      
+function listenItem(id) {
+    const ref = window.doc(window.db, "interactions", id);
+    window.onSnapshot(ref, (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
 
-    // UPDATE KOMENTAR
-    const box = document.getElementById(`comments-${id}`);
-    if (box) {
-      box.innerHTML = data.comments.map(c => `
-        <div><b>${c.user}:</b> ${c.text}</div>
-      `).join('');
-    }
-  });
+        // Update jumlah like di semua perangkat
+        const likeBtn = document.getElementById(`like-${id}`);
+        if (likeBtn) {
+            likeBtn.innerText = `❤️ ${data.liked || 0}`;
+            const isLiked = data.usersLiked && data.usersLiked.includes(activeUser);
+            likeBtn.style.color = isLiked ? "#ff7eb3" : "gray";
+        }
+
+        // Update daftar komentar di semua perangkat
+        const box = document.getElementById(`comments-${id}`);
+        if (box && data.comments) {
+            box.innerHTML = data.comments.map(c => `
+                <div class="text-[9px] mb-1">
+                    <b class="text-pink-500">${c.user}:</b> ${c.text}
+                </div>
+            `).join('');
+            box.scrollTop = box.scrollHeight;
+        }
+    });
 }
-
-
         function cekJodoh() {
             const n1 = document.getElementById('love1').value.trim().toLowerCase();
             const n2 = document.getElementById('love2').value.trim().toLowerCase();
@@ -891,6 +885,7 @@ window.addComment = async function (id) {
 </body>
 
 </html>
+
 
 
 
