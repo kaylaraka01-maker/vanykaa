@@ -651,7 +651,8 @@ body > * {
 
         function logout() {
         localStorage.setItem("archive_logged", "true");
-        localStorage.setItem("archive_user", name);
+        localStorage.setItem("archive_user", activeUser);
+
 
         location.reload();
         }
@@ -741,45 +742,46 @@ body > * {
             feedback.classList.remove('hidden');
         }
 
-        // --- Existing Functions ---
-        async function likeItem(id, type) {
-          const ref = doc(db, "interactions", id);
-          const snap = await getDoc(ref);
-          let data = snap.exists()
-            ? snap.data()
-            : { liked: 0, usersLiked: [], comments: [] };
+       async function likeItem(id) {
+  const ref = doc(db, "interactions", id);
+  const snap = await getDoc(ref);
 
-          const index = data.usersLiked.indexOf(activeUser);
+  let data = snap.exists()
+    ? snap.data()
+    : { liked: 0, usersLiked: [], comments: [] };
 
-          if (index === -1) {
-            data.liked++;
-            data.usersLiked.push(activeUser);
-          } else {
-         data.liked--;
-        data.usersLiked.splice(index, 1);
-          }
-          await setDoc(ref, data);
-        }
+  const i = data.usersLiked.indexOf(activeUser);
 
-        async function addComment(id, type) {
-          const input = document.getElementById(`in-${id}`);
-          if (!input.value.trim()) return;
+  if (i === -1) {
+    data.liked++;
+    data.usersLiked.push(activeUser);
+  } else {
+    data.liked--;
+    data.usersLiked.splice(i, 1);
+  }
 
-          const ref = doc(db, "interactions", id);
-          const snap = await getDoc(ref);
+  await setDoc(ref, data);
+}
+        
+async function addComment(id) {
+  const input = document.getElementById(`in-${id}`);
+  if (!input.value.trim()) return;
 
-          let data = snap.exists()
-            ? snap.data()
-            : { liked: 0, usersLiked: [], comments: [] };
+  const ref = doc(db, "interactions", id);
+  const snap = await getDoc(ref);
 
-          data.comments.push({
-            user: activeUser,
-            text: input.value
-              });
+  let data = snap.exists()
+    ? snap.data()
+    : { liked: 0, usersLiked: [], comments: [] };
 
-              await setDoc(ref, data);
-          input.value = "";
-            }
+  data.comments.push({
+    user: activeUser,
+    text: input.value
+  });
+
+  await setDoc(ref, data);
+  input.value = "";
+}
 
         function listenItem(id, type) {
   const ref = doc(db, "interactions", id);
@@ -885,6 +887,7 @@ body > * {
 </body>
 
 </html>
+
 
 
 
