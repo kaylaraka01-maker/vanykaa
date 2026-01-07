@@ -210,6 +210,16 @@ body > * {
   // Import the functions you need from the SDKs you need
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
   import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
+  import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+
+const db = getFirestore(app);
+
   // TODO: Add SDKs for Firebase products that you want to use
   // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -478,7 +488,7 @@ body > * {
             { name: "Panci", img: "https://images.unsplash.com/photo-1564349683136-77e08bef1ef1?w=400" }
         ];
 
-        let state = JSON.parse(localStorage.getItem('archive_pro_vfinal')) || { interactions: {}, chat: [] };
+        let state = { interactions: {}, chat: [] };
         let activeUser = "";
         let currentTrackIndex = 0;
 
@@ -587,12 +597,16 @@ body > * {
             renderGallery(type);
         }
 
-        function renderGallery(type) {
+       async function renderGallery(type) {
             const grid = document.getElementById('gallery-grid');
             const data = type === 'photo' ? DAFTAR_FOTO : DAFTAR_VIDEO;
             grid.innerHTML = data.map((item, index) => {
                 const itemId = `${type}-${index}`;
-                const meta = state.interactions[itemId] || { liked: 0, usersLiked: [], comments: [] };
+                const ref = doc(db, "interactions", itemId);
+                const snap = await getDoc(ref);
+                const meta = snap.exists()
+                  ? snap.data()
+                  : { liked: 0, usersLiked: [], comments: [] };
                 return `
                     <div class="neon-card p-2 md:p-5 animate-up flex flex-col">
                         <div class="aspect-square rounded-[12px] md:rounded-[20px] overflow-hidden mb-2 bg-slate-200 relative border border-black/5 cursor-pointer" onclick="openPreview('${item.src}', '${type}')">
@@ -732,20 +746,50 @@ body > * {
         }
 
         // --- Existing Functions ---
-        function likeItem(id, type) {
-            if(!state.interactions[id]) state.interactions[id] = { liked: 0, usersLiked: [], comments: [] };
-            const m = state.interactions[id];
-            const idx = m.usersLiked.indexOf(activeUser);
-            if(idx === -1) { m.liked++; m.usersLiked.push(activeUser); } else { m.liked--; m.usersLiked.splice(idx, 1); }
-            save(); renderGallery(type);
+        async function likeItem(id, type) {
+          const ref = doc(db, "interactions", id);
+          const snap = await getDoc(ref);
+          let data = snap.exists()
+            ? snap.data()
+            : { liked: 0, usersLiked: [], comments: [] };
+
+          const index = data.usersLiked.indexOf(activeUser);
+
+          if (index === -1) {
+            data.liked++;
+            data.usersLiked.push(activeUser);
+          } else {
+         data.liked--;
+        data.usersLiked.splice(index, 1);
+          }
+          await setDoc(ref, data);
         }
 
-        function addComment(id, type) {
-            const el = document.getElementById(`in-${id}`);
-            if(!el.value.trim()) return;
-            if(!state.interactions[id]) state.interactions[id] = { liked: 0, usersLiked: [], comments: [] };
-            state.interactions[id].comments.push({ user: activeUser, text: el.value });
-            el.value = ''; save(); renderGallery(type);
+        async function addComment(id, type) {
+          const input = document.getElementById(`in-${id}`);
+          if (!input.value.trim()) return;
+
+          const ref = doc(db, "interactions", id);
+          const snap = await getDoc(ref);
+
+          let data = snap.exists()
+            ? snap.data()
+            : { liked: 0, usersLiked: [], comments: [] };
+
+          data.comments.push({
+            user: activeUser,
+            text: input.value
+              });
+
+              await setDoc(ref, data);
+          input.value = "";
+            }
+
+        function listenItem(id, type) {
+      const ref = doc(db, "interactions", id);
+      onSnapshot(ref, () => {
+        renderGallery(type);
+      });
         }
 
         function cekKhodam() {
@@ -829,7 +873,6 @@ body > * {
             save(); renderChat();
         }
 
-        function save() { localStorage.setItem('archive_pro_vfinal', JSON.stringify(state)); }
         function updateCounter() {
             const diff = Math.floor((new Date() - CONFIG.startDate) / (1000 * 60 * 60 * 24));
             document.getElementById('counter').innerText = `${diff} rereppdanrakaa`;
@@ -838,4 +881,5 @@ body > * {
 </body>
 
 </html>
+
 
