@@ -225,7 +225,7 @@ body > * {
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // EXPOSE KE GLOBAL WINDOW
+    // Ekspos fungsi ke global window agar bisa dipanggil fungsi onclick
     window.db = db;
     window.doc = doc;
     window.getDoc = getDoc;
@@ -234,7 +234,7 @@ body > * {
     window.updateDoc = updateDoc;
     window.arrayUnion = arrayUnion;
 
-    console.log("Firebase Terkoneksi & Siap 🔥");
+    console.log("Firebase Siap & Terkoneksi 🔥");
 </script>
 <body class="light">
 
@@ -740,7 +740,7 @@ body > * {
         }
 
   window.likeItem = async function (id) {
-    if (!activeUser) return alert("Isi nama dulu di depan!");
+    if (!activeUser) return alert("Login dulu!");
     const ref = window.doc(window.db, "interactions", id);
     const snap = await window.getDoc(ref);
 
@@ -749,14 +749,12 @@ body > * {
     } else {
         const data = snap.data();
         const hasLiked = data.usersLiked && data.usersLiked.includes(activeUser);
-        
         if (!hasLiked) {
             await window.updateDoc(ref, {
                 liked: (data.liked || 0) + 1,
                 usersLiked: window.arrayUnion(activeUser)
             });
         } else {
-            // Logic Unlike
             const newUsers = data.usersLiked.filter(u => u !== activeUser);
             await window.updateDoc(ref, {
                 liked: Math.max(0, (data.liked || 1) - 1),
@@ -784,14 +782,13 @@ window.addComment = async function (id) {
     }
     input.value = "";
 };
-      
+
 function listenItem(id) {
     const ref = window.doc(window.db, "interactions", id);
     window.onSnapshot(ref, (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
 
-        // Update jumlah like di semua perangkat
         const likeBtn = document.getElementById(`like-${id}`);
         if (likeBtn) {
             likeBtn.innerText = `❤️ ${data.liked || 0}`;
@@ -799,13 +796,10 @@ function listenItem(id) {
             likeBtn.style.color = isLiked ? "#ff7eb3" : "gray";
         }
 
-        // Update daftar komentar di semua perangkat
         const box = document.getElementById(`comments-${id}`);
         if (box && data.comments) {
             box.innerHTML = data.comments.map(c => `
-                <div class="text-[9px] mb-1">
-                    <b class="text-pink-500">${c.user}:</b> ${c.text}
-                </div>
+                <div class="text-[9px] mb-1"><b>${c.user}:</b> ${c.text}</div>
             `).join('');
             box.scrollTop = box.scrollHeight;
         }
@@ -885,6 +879,7 @@ function listenItem(id) {
 </body>
 
 </html>
+
 
 
 
