@@ -207,40 +207,37 @@ body > * {
     </style>
 </head>
     <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
-  import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  onSnapshot
-} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
+/* 1️⃣ IMPORT (JANGAN DIUBAH) */
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-analytics.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 
-const db = getFirestore(app);
+    /* 2️⃣ CONFIG */
+    const firebaseConfig = {
+      apiKey: "AIzaSyClRS-JtlugNlhoRWlI_Z11hmopsdCK0eI",
+      authDomain: "vanykaa-fdf58.firebaseapp.com",
+      projectId: "vanykaa-fdf58",
+      storageBucket: "vanykaa-fdf58.firebasestorage.app",
+      messagingSenderId: "586577084670",
+      appId: "1:586577084670:web:30a55ad5613e271e7925af",
+      measurementId: "G-VEG0DWD3DG"
+    };
+    
+/* 3️⃣ INIT FIREBASE (URUTAN WAJIB) */
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
 
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+    console.log("Firebase siap 🔥");
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyClRS-JtlugNlhoRWlI_Z11hmopsdCK0eI",
-    authDomain: "vanykaa-fdf58.firebaseapp.com",
-    projectId: "vanykaa-fdf58",
-    storageBucket: "vanykaa-fdf58.firebasestorage.app",
-    messagingSenderId: "586577084670",
-    appId: "1:586577084670:web:30a55ad5613e271e7925af",
-    measurementId: "G-VEG0DWD3DG"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
-
-      console.log("firebase siap 🔥");
+    /* 4️⃣ JANGAN TUTUP SCRIPT DI SINI */
+    /* FUNCTION LAIN BOLEH DI BAWAH */
     </script>
 <body class="light">
 
@@ -546,7 +543,7 @@ const db = getFirestore(app);
         .join("");
 }
 
-        async function unlockApp() {
+        window.unlockApp = async function () {
         const name = document.getElementById('userNameInput').value.trim();
         const pass = document.getElementById('passInput').value;
 
@@ -598,46 +595,59 @@ const db = getFirestore(app);
         }
 
        async function renderGallery(type) {
-            const grid = document.getElementById('gallery-grid');
-            const data = type === 'photo' ? DAFTAR_FOTO : DAFTAR_VIDEO;
-            grid.innerHTML = data.map((item, index) => {
-                const itemId = `${type}-${index}`;
-                const ref = doc(db, "interactions", itemId);
-                const snap = await getDoc(ref);
-                const meta = snap.exists()
-                  ? snap.data()
-                  : { liked: 0, usersLiked: [], comments: [] };
-                return `
-                    <div class="neon-card p-2 md:p-5 animate-up flex flex-col">
-                        <div class="aspect-square rounded-[12px] md:rounded-[20px] overflow-hidden mb-2 bg-slate-200 relative border border-black/5 cursor-pointer" onclick="openPreview('${item.src}', '${type}')">
-                            ${type === 'photo' ? `<img src="${item.src}" class="w-full h-full object-cover">` : 
-                            `<video src="${item.src}" loop muted playsinline class="w-full h-full object-cover"></video>`}
-                        </div>
-                        
-                        <div class="flex justify-between items-center px-0.5 mb-2">
-                            <h4 class="font-black text-[9px] md:text-sm uppercase truncate pr-1 italic">${item.caption}</h4>
-                            <button onclick="likeItem('${itemId}', '${type}')" class="text-[8px] md:text-xs font-black ${meta.usersLiked.includes(activeUser) ? 'text-pink-500' : 'opacity-40'} flex items-center gap-0.5 bg-pink-500/5 px-1.5 py-0.5 rounded-full border border-pink-500/10">❤️ ${meta.liked}</button>
-                        </div>
-                        
-                        <div class="space-y-1.5 mb-2 h-[80px] md:h-[120px] overflow-y-auto scroll-hide border-t border-pink-500/5 pt-2 px-0.5">
-                             ${meta.comments.length === 0 ? '<p class="text-[7px] opacity-30 italic text-center py-1">No comments...</p>' : ''}
-                             ${meta.comments.map(c => `
-                                <div class="flex items-start gap-1.5">
-                                    <img src="${getAvatarUrl(c.user)}" class="comment-avatar flex-shrink-0">
-                                    <div class="text-[8px] md:text-xs leading-tight bg-black/5 dark:bg-white/5 p-1.5 rounded-lg flex-grow">
-                                        <p class="text-pink-500 font-black text-[7px] uppercase tracking-tighter">${c.user}</p> 
-                                        <p class="font-medium">${c.text}</p>
-                                    </div>
-                                </div>`).join('')}
-                        </div>
+          const grid = document.getElementById('gallery-grid');
+          const data = type === 'photo' ? DAFTAR_FOTO : DAFTAR_VIDEO;
 
-                        <div class="flex gap-1">
-                            <input id="in-${itemId}" placeholder="Tulis..." class="app-input flex-grow p-2 rounded-lg text-[8px] md:text-xs outline-none border-none shadow-inner" onkeypress="if(event.key === 'Enter') addComment('${itemId}', '${type}')">
-                            <button onclick="addComment('${itemId}', '${type}')" class="bg-pink-500 text-white px-2 rounded-lg font-black text-[8px] md:text-xs transition-transform active:scale-90">➤</button>
-                        </div>
-                    </div>`;
-            }).join('');
+          let html = "";
+
+          for (let index = 0; index < data.length; index++) {
+            const item = data[index];
+            const itemId = `${type}-${index}`;
+
+            const ref = doc(db, "interactions", itemId);
+            const snap = await getDoc(ref);
+
+            const meta = snap.exists()
+              ? snap.data()
+              : { liked: 0, usersLiked: [], comments: [] };
+
+            html += `
+              <div class="neon-card p-2 md:p-5 animate-up flex flex-col">
+                <div class="aspect-square overflow-hidden mb-2 cursor-pointer"
+                     onclick="openPreview('${item.src}', '${type}')">
+                  ${type === 'photo'
+                    ? `<img src="${item.src}" class="w-full h-full object-cover">`
+                    : `<video src="${item.src}" muted loop class="w-full h-full object-cover"></video>`}
+                </div>
+
+                <div class="flex justify-between items-center mb-2">
+                  <h4 class="font-black text-[9px] italic">${item.caption}</h4>
+                  <button onclick="likeItem('${itemId}')"
+                    class="text-[8px] ${meta.usersLiked.includes(activeUser) ? 'text-pink-500' : 'opacity-40'}">
+                    ❤️ ${meta.liked}
+                  </button>
+                </div>
+
+                <div class="space-y-1 mb-2 h-[80px] overflow-y-auto">
+                  ${meta.comments.map(c => `
+                    <div class="text-[8px]">
+                      <b>${c.user}:</b> ${c.text}
+                    </div>
+                  `).join('')}
+                </div>
+
+                <div class="flex gap-1">
+                  <input id="in-${itemId}" class="app-input flex-grow"
+                    onkeypress="if(event.key==='Enter') addComment('${itemId}')">
+                  <button onclick="addComment('${itemId}')">➤</button>
+                </div>
+              </div>
+            `;
+          }
+    
+          grid.innerHTML = html;
         }
+
         function autoUnlock(name) {
         activeUser = name;
         document.getElementById('userAvatarImg').src = getAvatarUrl(name);
@@ -881,5 +891,6 @@ const db = getFirestore(app);
 </body>
 
 </html>
+
 
 
