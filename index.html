@@ -594,59 +594,45 @@ body > * {
             renderGallery(type);
         }
 
-       async function renderGallery(type) {
-          const grid = document.getElementById('gallery-grid');
-          const data = type === 'photo' ? DAFTAR_FOTO : DAFTAR_VIDEO;
+       function renderGallery(type) {
+  const grid = document.getElementById('gallery-grid');
+  const data = type === 'photo' ? DAFTAR_FOTO : DAFTAR_VIDEO;
 
-          let html = "";
+  grid.innerHTML = data.map((item, index) => {
+    const itemId = `${type}-${index}`;
 
-          for (let index = 0; index < data.length; index++) {
-            const item = data[index];
-            const itemId = `${type}-${index}`;
-
-            const ref = doc(db, "interactions", itemId);
-            const snap = await getDoc(ref);
-
-            const meta = snap.exists()
-              ? snap.data()
-              : { liked: 0, usersLiked: [], comments: [] };
-
-            html += `
-              <div class="neon-card p-2 md:p-5 animate-up flex flex-col">
-                <div class="aspect-square overflow-hidden mb-2 cursor-pointer"
-                     onclick="openPreview('${item.src}', '${type}')">
-                  ${type === 'photo'
-                    ? `<img src="${item.src}" class="w-full h-full object-cover">`
-                    : `<video src="${item.src}" muted loop class="w-full h-full object-cover"></video>`}
-                </div>
-
-                <div class="flex justify-between items-center mb-2">
-                  <h4 class="font-black text-[9px] italic">${item.caption}</h4>
-                  <button onclick="likeItem('${itemId}')"
-                    class="text-[8px] ${meta.usersLiked.includes(activeUser) ? 'text-pink-500' : 'opacity-40'}">
-                    ❤️ ${meta.liked}
-                  </button>
-                </div>
-
-                <div class="space-y-1 mb-2 h-[80px] overflow-y-auto">
-                  ${meta.comments.map(c => `
-                    <div class="text-[8px]">
-                      <b>${c.user}:</b> ${c.text}
-                    </div>
-                  `).join('')}
-                </div>
-
-                <div class="flex gap-1">
-                  <input id="in-${itemId}" class="app-input flex-grow"
-                    onkeypress="if(event.key==='Enter') addComment('${itemId}')">
-                  <button onclick="addComment('${itemId}')">➤</button>
-                </div>
-              </div>
-            `;
+    return `
+      <div class="neon-card p-2 md:p-5 animate-up flex flex-col">
+        <div class="aspect-square overflow-hidden mb-2 cursor-pointer"
+          onclick="openPreview('${item.src}', '${type}')">
+          ${
+            type === 'photo'
+              ? `<img src="${item.src}" class="w-full h-full object-cover">`
+              : `<video src="${item.src}" muted loop class="w-full h-full object-cover"></video>`
           }
-    
-          grid.innerHTML = html;
-        }
+        </div>
+
+        <div class="flex justify-between items-center mb-2">
+          <h4 class="font-black text-[9px] italic">${item.caption}</h4>
+          <button id="like-${itemId}" class="text-[8px] opacity-40">❤️ 0</button>
+        </div>
+
+        <div id="comments-${itemId}" class="text-[8px] h-[80px] overflow-y-auto"></div>
+
+        <div class="flex gap-1">
+          <input id="in-${itemId}" class="app-input flex-grow"
+            onkeypress="if(event.key==='Enter') addComment('${itemId}')">
+          <button onclick="addComment('${itemId}')">➤</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // setelah tampil, baru sync firestore
+  data.forEach((_, index) => {
+    listenItem(`${type}-${index}`, type);
+  });
+}
 
         function autoUnlock(name) {
         activeUser = name;
@@ -796,26 +782,34 @@ body > * {
             }
 
         function listenItem(id, type) {
-      const ref = doc(db, "interactions", id);
-      onSnapshot(ref, () => {
-        renderGallery(type);
-      });
-        }
+  const ref = doc(db, "interactions", id);
 
-        function cekKhodam() {
-            const name = document.getElementById('khodamNameInput').value.trim();
-            if(!name) return;
-            document.getElementById('khodamRitual').classList.remove('hidden');
-            document.getElementById('khodamDisplay').classList.add('hidden');
-            setTimeout(() => {
-                document.getElementById('khodamRitual').classList.add('hidden');
-                document.getElementById('khodamDisplay').classList.remove('hidden');
-                let h = 0; for(let i=0; i<name.length; i++) h += name.charCodeAt(i);
-                const res = khodamList[h % khodamList.length];
-                document.getElementById('khodamResult').innerText = res.name;
-                document.getElementById('khodamImg').src = res.img;
-            }, 1500);
-        }
+  onSnapshot(ref, (snap) => {
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+
+    // UPDATE LIKE
+    const likeBtn = document.getElementById(`like-${id}`);
+    if (likeBtn) {
+      likeBtn.innerText = `❤️ ${data.liked}`;
+      likeBtn.classList.toggle(
+        'text-pink-500',
+        data.usersLiked.includes(activeUser)
+      );
+      likeBtn.onclick = () => likeItem(id);
+    }
+
+    // UPDATE KOMENTAR
+    const box = document.getElementById(`comments-${id}`);
+    if (box) {
+      box.innerHTML = data.comments.map(c => `
+        <div><b>${c.user}:</b> ${c.text}</div>
+      `).join('');
+    }
+  });
+}
+
 
         function cekJodoh() {
             const n1 = document.getElementById('love1').value.trim().toLowerCase();
@@ -891,6 +885,7 @@ body > * {
 </body>
 
 </html>
+
 
 
 
