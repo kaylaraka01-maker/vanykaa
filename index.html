@@ -742,7 +742,9 @@ body > * {
             feedback.classList.remove('hidden');
         }
 
-   window.likeItem = async function (id) {
+  window.likeItem = async function (id) {
+  if (!activeUser) return alert("Login dulu");
+
   const ref = doc(db, "interactions", id);
   const snap = await getDoc(ref);
 
@@ -761,11 +763,13 @@ body > * {
   }
 
   await setDoc(ref, data);
-}
+};
         
 window.addComment = async function (id) {
+  if (!activeUser) return alert("Login dulu");
+
   const input = document.getElementById(`in-${id}`);
-  if (!input.value.trim()) return;
+  if (!input || !input.value.trim()) return;
 
   const ref = doc(db, "interactions", id);
   const snap = await getDoc(ref);
@@ -781,7 +785,7 @@ window.addComment = async function (id) {
 
   await setDoc(ref, data);
   input.value = "";
-}
+};
 
         function listenItem(id, type) {
   const ref = doc(db, "interactions", id);
@@ -887,6 +891,7 @@ window.addComment = async function (id) {
 </body>
 
 </html>
+
 
 
 
