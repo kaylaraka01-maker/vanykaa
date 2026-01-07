@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Archive | Fun Neon Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff7eb3;
+            --secondary: #7000ff;
+            --bg-body: #f8fafc;
+            --text-main: #000000;
+            --neon-glow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            --card-bg: #ffffff;
+            --card-border: #000000;
+            --input-bg: #f1f5f9;
+        }
+
+        .dark {
+            --bg-body: #020617;
+            --text-main: #ffffff;
+            --neon-glow: 0 0 20px rgba(255, 126, 179, 0.6), 0 0 40px rgba(255, 126, 179, 0.2);
+            --card-bg: #0f172a;
+            --card-border: var(--primary);
+            --input-bg: #1e293b;
+        }
+        /* =========================
+        NIGHT MODE OVERLAY EFFECT
+        ========================= */
+        body.dark::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+        radial-gradient(
+            circle at top,
+            rgba(240, 107, 162, 0.08),
+            rgba(2, 6, 23, 0.85)
+        ),
+        linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0.2),
+            rgba(0, 0, 0, 0.6)
+        );
+            pointer-events: none;
+        z-index: 5;
+}
+/* =========================
+   ANIMATED NIGHT OVERLAY
+   ========================= */
+
+body.dark::before {
+    content: "";
+    position: fixed;
+    inset: -50%;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255,126,179,0.12), transparent 40%),
+        radial-gradient(circle at 80% 30%, rgba(112,0,255,0.12), transparent 45%),
+        radial-gradient(circle at 50% 80%, rgba(255,126,179,0.08), transparent 50%),
+        linear-gradient(120deg, #020617, #0f172a, #020617);
+    animation: nightFlow 25s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* Supaya semua konten tetap di atas overlay */
+body > * {
+    position: relative;
+    z-index: 10;
+}
+
+/* Animasi gradasi */
+@keyframes nightFlow {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+    50% {
+        transform: translate(-10%, -5%) scale(1.05);
+    }
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+}
+
+/* Supaya konten tidak ketutup overlay */
+body > * {
+    position: relative;
+    z-index: 10;
+}
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: all 0.5s ease;
+            overflow-x: hidden;
+        }
+
+        .serif { font-family: 'Playfair Display', serif; }
+
+        .neon-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--card-border);
+            box-shadow: var(--neon-glow);
+            border-radius: 16px;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        @media (min-width: 768px) {
+            .neon-card { border-radius: 28px; border-width: 3px; }
+        }
+
+        body:not(.dark) .neon-card {
+            box-shadow: 3px 3px 0px #000000;
+        }
+        @media (min-width: 768px) {
+            body:not(.dark) .neon-card { box-shadow: 8px 8px 0px #000000; }
+        }
+
+        .neon-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            border-color: var(--primary);
+        }
+
+        .music-player {
+            position: fixed; top: 15px; right: 15px; z-index: 2000;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(12px);
+            padding: 8px 15px; border-radius: 15px; display: flex;
+            align-items: center; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-width: 180px;
+        }
+
+        .music-disk {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            animation: spin 3s linear infinite; animation-play-state: paused;
+        }
+        .music-disk.playing { animation-play-state: running; }
+
+        .lyrics-scroll {
+            font-size: 7px; font-weight: 800; color: white;
+            white-space: nowrap; overflow: hidden; width: 60px;
+        }
+        .lyrics-text { display: inline-block; padding-left: 100%; animation: marquee 15s linear infinite; }
+
+        @keyframes marquee { 0% { transform: translate(0, 0); } 100% { transform: translate(-100%, 0); } }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        .nav-pill {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+            padding: 8px; border-radius: 100px; display: flex; gap: 8px;
+        }
+        .nav-btn {
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 1rem;
+        }
+        .nav-btn.active { background: var(--primary); transform: scale(1.1); box-shadow: 0 0 15px var(--primary); }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-up { animation: slideInUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+
+        .avatar-circle {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            overflow: hidden; display: flex; align-items: center; justify-content: center;
+            border: 2px solid white;
+        }
+
+        .comment-avatar { 
+            width: 20px; height: 20px; border-radius: 50%; object-fit: cover; border: 1px solid var(--primary); 
+        }
+
+        .app-input { background-color: var(--input-bg) !important; color: var(--text-main) !important; font-weight: 600; }
+        .scroll-hide::-webkit-scrollbar { display: none; }
+
+        #modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 6000;
+            display: none; align-items: center; justify-content: center; padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+        #modal-content img, #modal-content video {
+            max-width: 100%; max-height: 80vh; border-radius: 15px; box-shadow: 0 0 50px rgba(255, 126, 179, 0.4);
+        }
+
+        /* Canvas Styles */
+        #drawingCanvas {
+            cursor: crosshair;
+            touch-action: none;
+            background: #fff;
+        }
+        .dark #drawingCanvas {
+            background: #1e293b;
+        }
+        
+        input[type="range"] {
+            accent-color: var(--primary);
+        }
+    </style>
+</head>
+<body class="light">
+
+    <div id="modal-overlay" onclick="closeModal()">
+        <button class="absolute top-5 right-5 text-white text-4xl font-bold hover:text-pink-500 transition-colors">&times;</button>
+        <div id="modal-content" class="animate-up" onclick="event.stopPropagation()"></div>
+    </div>
+
+    <div id="music-ui" class="music-player hidden">
+        <div id="musicDisk" class="music-disk"></div>
+        <div class="lyrics-scroll">
+            <span id="lyricText" class="lyrics-text">Memutar: <span id="currentTrackLabel">...</span></span>
+        </div>
+        <div class="flex gap-1">
+            <button onclick="toggleMusic()" class="text-white text-xs">
+                <span id="playIcon">▶️</span>
+            </button>
+            <button onclick="nextMusic()" class="text-white text-[8px]">⏭️</button>
+        </div>
+        <audio id="bgMusic" preload="auto"></audio>
+    </div>
+
+    <div id="gate-screen" class="fixed inset-0 z-[5000] bg-slate-950 flex items-center justify-center p-6 transition-all duration-1000">
+    <div class="max-w-md w-full p-8 text-center rounded-[30px] border border-white/10 shadow-2xl" style="background: rgba(15, 23, 42, 0.95)">
+        <!-- FOTO BULAT -->
+        <img 
+            src="ft1.jpg"
+            class="w-24 h-24 rounded-full object-cover border-4 border-pink-500 mx-auto mb-6"
+        >
+        <!-- JUDUL ARCHIVE -->
+        <div class="mb-6 relative inline-block">
+            <div class="absolute inset-0 bg-pink-500 blur-2xl opacity-20 animate-pulse"></div>
+            <h2 class="serif text-4xl font-bold text-white tracking-widest relative italic">
+                ARCHIVE
+            </h2>
+        </div>
+        <!-- FORM LOGIN -->
+        <div class="space-y-3">
+            <input type="text" id="userNameInput" placeholder="Isi nama lu"
+                class="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 outline-none text-center text-white focus:border-pink-500 transition-all font-bold">
+
+            <input type="password" id="passInput" placeholder="Masukin kata sandi"
+                class="w-full bg-white/5 border border-white/10 rounded-xl py-4 px-5 outline-none text-center text-white focus:border-pink-500 transition-all font-bold">
+
+            <button onclick="unlockApp()"
+                class="w-full bg-pink-500 text-white py-4 rounded-xl font-extrabold mt-2 hover:scale-[1.03] transition-all">
+                MASUK
+            </button>
+        </div>
+        <p id="error-msg"
+            class="text-pink-400 text-[10px] mt-6 opacity-0 uppercase tracking-widest transition-opacity font-bold">
+            Akses Ditolak.
+        </p>
+    </div>
+</div>
+
+
+    <div id="app-container" class="hidden">
+        <header class="pt-12 pb-6 px-4 flex flex-col items-center">
+            <div class="mb-4 flex items-center gap-3 animate-up">
+                <div class="avatar-circle">
+                    <img id="userAvatarImg" src="" alt="Avatar" class="w-full h-full object-cover">
+                </div>
+                <div class="text-left">
+                    <p class="text-[9px] font-bold opacity-50 uppercase tracking-widest">Hi,</p>
+                    <p id="displayUserName" class="font-black text-base italic"></p>
+                </div>
+            </div>
+            <h1 class="serif text-4xl md:text-7xl font-bold mb-2 tracking-tighter italic text-center">Archive.</h1>
+            <div id="counter" class="text-[9px] font-black tracking-[0.2em] text-pink-500 uppercase bg-pink-500/10 inline-block px-4 py-1.5 rounded-full border border-pink-500/20">MENGHITUNG...</div>
+        </header>
+
+        <main class="max-w-4xl mx-auto px-2 md:px-4 pb-40">
+            <section id="gallery-panel" class="animate-up">
+                <div class="flex justify-center gap-2 mb-6">
+                    <button onclick="filterType('photo')" id="btnPhoto" class="px-6 py-2.5 rounded-full font-black text-[10px] transition-all bg-pink-500 text-white shadow-lg">📸 PHOTO</button>
+                    <button onclick="filterType('video')" id="btnVideo" class="px-6 py-2.5 rounded-full font-black text-[10px] transition-all border border-pink-500 text-pink-500">🎥 VIDEO</button>
+                </div>
+                <div id="gallery-grid" class="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-8"></div>
+            </section>
+
+            <section id="games-panel" class="hidden animate-up">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-2">
+                    <!-- Drawing Pad: Updated -->
+                    <div class="neon-card p-6 text-center flex flex-col items-center">
+                        <h3 class="serif text-xl font-bold mb-2">Drawing</h3>
+                        <p class="text-[8px] opacity-50 mb-4 uppercase tracking-widest">Gambar kalo iseng ma</p>
+                        
+                        <!-- Toolbar -->
+                        <div class="flex items-center gap-3 mb-4 bg-slate-100 dark:bg-slate-800 p-2 rounded-xl w-full">
+                            <input type="color" id="penColor" value="#ff7eb3" class="w-8 h-8 rounded cursor-pointer bg-transparent border-none">
+                            <div class="flex flex-col items-start flex-grow">
+                                <label class="text-[7px] font-black uppercase opacity-60">Size</label>
+                                <input type="range" id="penSize" min="1" max="20" value="3" class="w-full h-1">
+                            </div>
+                        </div>
+
+                        <div class="border border-pink-500/30 rounded-xl overflow-hidden mb-4 w-full h-[200px]">
+                            <canvas id="drawingCanvas" class="w-full h-full"></canvas>
+                        </div>
+                        <div class="flex gap-2 w-full">
+                            <button onclick="clearCanvas()" class="flex-grow bg-slate-800 text-white py-3 rounded-xl font-black text-[10px]">HAPUS</button>
+                        </div>
+                    </div>
+
+                    <!-- Tebak-tebakan: Updated -->
+                    <div class="neon-card p-6 text-center flex flex-col items-center">
+                        <h3 class="serif text-xl font-bold mb-2">tebak-tebakan</h3>
+                        <p class="text-[8px] opacity-50 mb-4 uppercase tracking-widest">maenin aja kalo gabut</p>
+                        <div class="bg-pink-500/5 border border-pink-500/20 rounded-2xl p-6 w-full min-h-[140px] flex flex-col justify-center mb-4 relative overflow-hidden">
+                            <p id="tebakSoal" class="font-bold text-xs mb-4">klik 'acak' untuk mulai</p>
+                            
+                            <!-- Input Tebakan -->
+                            <div id="tebakInputArea" class="hidden space-y-3">
+                                <input type="text" id="userGuess" placeholder="Ketik jawaban..." class="app-input w-full p-2 rounded-lg text-center text-[10px] border-none outline-none">
+                                <button onclick="checkTebakan()" class="w-full bg-slate-900 text-white py-2 rounded-lg font-black text-[9px] uppercase tracking-wider">Cek Jawaban</button>
+                            </div>
+
+                            <p id="tebakJawab" class="font-black text-pink-500 text-sm uppercase hidden italic mt-2 animate-up"></p>
+                        </div>
+                        <div class="flex gap-2 w-full">
+                            <button onclick="acakTebakan()" class="flex-grow bg-pink-500 text-white py-3 rounded-xl font-black text-[10px]">ACAK</button>
+                            <button id="btnReveal" onclick="revealJawaban()" class="flex-grow bg-slate-900 text-white py-3 rounded-xl font-black text-[10px] opacity-50 cursor-not-allowed" disabled>NYERAH</button>
+                        </div>
+                    </div>
+
+                    <!-- Existing Cek Khodam -->
+                    <div class="neon-card p-6 text-center flex flex-col items-center">
+                        <h3 class="serif text-xl font-bold mb-4">cek Khodam</h3>
+                        <input type="text" id="khodamNameInput" placeholder="Nama..." class="app-input w-full p-3 rounded-xl outline-none text-center mb-4 text-xs">
+                        <div id="khodamRitual" class="hidden py-4"><div class="ritual-spin w-8 h-8 border-4 border-t-pink-500 border-pink-500/10 rounded-full animate-spin mx-auto"></div></div>
+                        <div id="khodamDisplay" class="hidden mb-4 w-full">
+                            <img id="khodamImg" src="" class="w-20 h-20 object-cover rounded-full border-2 border-pink-500 mx-auto mb-2">
+                            <div id="khodamResult" class="font-black text-xs text-pink-500 uppercase italic"></div>
+                        </div>
+                        <button onclick="cekKhodam()" class="w-full bg-pink-500 text-white py-3 rounded-xl font-black text-[10px]">CEK</button>
+                    </div>
+
+                    <!-- Existing Love Meter -->
+                    <div class="neon-card p-6 text-center flex flex-col items-center">
+                        <h3 class="serif text-xl font-bold mb-4">Love Meter</h3>
+                        <div class="space-y-2 mb-4 w-full">
+                            <input type="text" id="love1" placeholder="Nama Kamu" class="app-input w-full p-3 rounded-xl text-center text-xs">
+                            <input type="text" id="love2" placeholder="Isi Nama pacar " class="app-input w-full p-3 rounded-xl text-center text-xs">
+                        </div>
+                        <div id="loveResult" class="mb-4 min-h-[50px] w-full flex items-center justify-center"></div>
+                        <button onclick="cekJodoh()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-[10px]">HITUNG</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="chat-panel" class="hidden max-w-2xl mx-auto animate-up px-2">
+                <div class="neon-card flex flex-col h-[450px] overflow-hidden">
+                    <div id="chatBox" class="flex-grow p-4 overflow-y-auto space-y-4 scroll-hide"></div>
+                    <div class="p-3 border-t border-pink-500/10 flex gap-2">
+                        <input type="text" id="chatInput" placeholder="Tulis..." class="flex-grow app-input p-3 rounded-xl outline-none text-xs" onkeypress="if(event.key === 'Enter') sendChat()">
+                        <button onclick="sendChat()" class="bg-pink-500 text-white px-4 rounded-xl font-black text-[10px]">KIRIM</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <nav id="main-nav" class="nav-pill hidden">
+        <button onclick="showPanel('gallery')" id="nav-gallery" class="nav-btn active">🖼️</button>
+        <button onclick="showPanel('games')" id="nav-games" class="nav-btn">🎲</button>
+        <button onclick="showPanel('chat')" id="nav-chat" class="nav-btn">💭</button>
+        <button onclick="toggleTheme()" class="nav-btn">🌓</button>
+        <button onclick="logout()" class="nav-btn">🚪</button>
+    </nav>
+
+    <script>
+        const PLAYLIST = [
+            { src: "terbuangdalamwaktu.mp3", title: "terbuang dalam waktu" },
+            { src: "kasihputih.mp3", title: "kasih putih" },
+            { src: "https://www.bensound.com/bensound-music/bensound-memories.mp3", title: "Our Memories" }
+        ];
+
+        const DAFTAR_FOTO = [
+            { src: "ft2.jpg", caption: "Rerepp lucu" },
+            { src: "ft3.jpg", caption: "anjay" },
+            { src: "ft4.jpg", caption: "kereennn" },
+            { src: "ft5.jpg", caption: "🤍🤍" },
+            { src: "ft6.jpg", caption: "" },
+            { src: "ft7.jpg", caption: "🤍🤍🤍" },
+            { src: "ft8.jpg", caption: "hehehe" },
+            { src: "ft9.jpg", caption: "fotbar ngasih raka hadiah" },
+            { src: "ft10.jpg", caption: "nontonn" },
+            { src: "ft11.jpg", caption: "nontoon" },
+            { src: "ft12.jpg", caption: "rerep ultah" },
+            { src: "ft13.jpg", caption: "jogingg" },
+            { src: "ft14.jpg", caption: "rerep pngn d manja" },
+            { src: "ft15.jpg", caption: "larii bos" },
+            { src: "ft16.jpg", caption: "🤍" },
+            { src: "ft17.jpg", caption: "duit rerep bnyk " },
+            { src: "ft18.jpg", caption: "fotbar pulang skul" },
+            { src: "ft19.jpg", caption: "palepale" },
+            { src: "ft20.jpg", caption: "nonton lagi bos" },
+            { src: "ft21.jpg", caption: "ckrek" },
+            { src: "ft22.jpg", caption: "rerep lelah" },
+            { src: "ft23.jpg", caption: "frst nontn" },
+            { src: "ft24.jpg", caption: "🤍🤍" },
+            { src: "ft25.jpg", caption: "wleele" },
+            { src: "ft26.jpg", caption: "anjaii" },
+            { src: "ft27.jpg", caption: "Asal cekrek njr" },    
+            { src: "ft28.jpg", caption: "senderan" },
+            { src: "ft29.jpg", caption: "frtst fotbar" },
+            { src: "ft30.jpg", caption: "frst fotbar" },
+            { src: "ft31.jpg", caption: "Wlelele" },
+            { src: "ft32.jpg", caption: "🤍🤍🤍" },
+            { src: "ft33.jpg", caption: "miksuu" },
+            { src: "ft34.jpg", caption: "miksuu" },
+            { src: "ft35.jpg", caption: "miksuu" },
+            
+        ];
+
+        const DAFTAR_VIDEO = [
+            { src: "vid1.mp4", caption: "gamau diem amat" },
+            { src: "vid2.mp4", caption: "haii" },
+            { src: "vid3.mp4", caption: "gbs diem si raka" },
+            { src: "vid4.mp4", caption: "nangisss" },
+            { src: "vid5.mp4", caption: "rerep ketiduran" },
+            { src: "vid6.mp4", caption: "miksuuyy" },
+            { src: "vid7.mp4", caption: "miksuuyy" },
+            { src: "vid8.mp4", caption: "miksuuyy" },
+            { src: "vid9.mp4", caption: "miksuuyy" },
+            { src: "vid10.mp4", caption: "miksuuyy" },
+            { src: "vid11.mp4", caption: "miksuuyy" },
+            { src: "vid12.mp4", caption: "miksuuyy" }
+        ];
+
+        const TEBAKAN = [
+            { q: "Sapi sapi apa yg bisa manjat?", a: "sapiderman" },
+            { q: "Ikan ikan apa yg bisa di masak?", a: "ikan pasar" },
+            { q: "Kenapa pohon kelapa di depan rumah harus ditebang?", a: "Karena kalau dicabut berat" },
+            { q: "Ikan apa yang kalau berhenti, malah malu?", a: "Ikan Paus" },
+            { q: "Gajah apa yang punya belalai pendek?", a: "Gajah pesek" },
+            { q: "Lele apa yang di tepi jalan?", a: "Lele-pon umum" },
+            { q: "Sabun, sabun apa yang genit?", a: "Sabun-colek" }
+        ];
+        // ===== ADMIN MODE =====
+        const ADMIN_HASH = "ISI_HASH_PASSWORD_ADMIN_LU";
+
+        let isAdmin = localStorage.getItem("archive_admin") === "true";
+        let BANNED_USERS = JSON.parse(localStorage.getItem("banned_users")) || [];
+
+        const PASSWORD_HASH = "c1d0edfb270bd015717a41409c40779dbf9445e6efe6382ffe8e28920d799ff3";
+        const CONFIG = { startDate: new Date("14-05-2025") };
+
+        const khodamList = [
+            { name: "Monyet", img: "https://images.unsplash.com/photo-1501705388883-4ed8a543392c?w=400" },
+            { name: "Sapu lidi", img: "https://images.unsplash.com/photo-1514888286872-6799c29a8189?w=400" },
+            { name: "Panci", img: "https://images.unsplash.com/photo-1564349683136-77e08bef1ef1?w=400" }
+        ];
+
+        let state = JSON.parse(localStorage.getItem('archive_pro_vfinal')) || { interactions: {}, chat: [] };
+        let activeUser = "";
+        let currentTrackIndex = 0;
+
+        window.onload = () => {
+
+        // MUSIK
+        loadTrack(0);
+        document.getElementById('bgMusic').onended = () => nextMusic();
+        // GAMBAR
+        initDrawing();
+        resizeCanvas();
+        // AUTO LOGIN
+        if (localStorage.getItem("archive_logged") === "true") {
+        const name = localStorage.getItem("archive_user");
+        if (name) autoUnlock(name);
+        }
+        };
+
+        function getAvatarUrl(name) { return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=ff7eb3&color=fff&bold=true`; }
+
+        function openPreview(src, type) {
+            const overlay = document.getElementById('modal-overlay');
+            const content = document.getElementById('modal-content');
+            overlay.style.display = 'flex';
+            if(type === 'photo') {
+                content.innerHTML = `<img src="${src}" alt="Preview" class="animate-up">`;
+            } else {
+                content.innerHTML = `<video src="${src}" controls autoplay class="w-full animate-up"></video>`;
+            }
+        }
+
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+        function loadTrack(i) {
+            const m = document.getElementById('bgMusic');
+            currentTrackIndex = i;
+            m.src = PLAYLIST[i].src;
+            document.getElementById('currentTrackLabel').innerText = PLAYLIST[i].title;
+            m.load();
+        }
+        function toggleMusic() {
+            const m = document.getElementById('bgMusic');
+            const d = document.getElementById('musicDisk');
+            const icon = document.getElementById('playIcon');
+            if(m.paused) { m.play(); d.classList.add('playing'); icon.innerText = "⏸️"; }
+            else { m.pause(); d.classList.remove('playing'); icon.innerText = "▶️"; }
+        }
+        function nextMusic() { currentTrackIndex = (currentTrackIndex + 1) % PLAYLIST.length; loadTrack(currentTrackIndex); if(!document.getElementById('bgMusic').paused) toggleMusic(); }
+
+        async function hash(text) {
+    const enc = new TextEncoder().encode(text);
+    const buf = await crypto.subtle.digest("SHA-256", enc);
+    return Array.from(new Uint8Array(buf))
+        .map(b => b.toString(16).padStart(2, "0"))
+        .join("");
+}
+
+        async function unlockApp() {
+        const name = document.getElementById('userNameInput').value.trim();
+        const pass = document.getElementById('passInput').value;
+
+        if(!name) return;
+
+        const inputHash = await hash(pass);
+
+        if(inputHash === PASSWORD_HASH) {
+        activeUser = name;
+        document.getElementById('userAvatarImg').src = getAvatarUrl(name);
+        document.getElementById('displayUserName').innerText = name;
+        document.getElementById('gate-screen').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('gate-screen').style.display = 'none';
+            document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('main-nav').classList.remove('hidden');
+            document.getElementById('music-ui').classList.remove('hidden');
+            updateCounter(); 
+            renderGallery('photo'); 
+            renderChat();
+        }, 1000);
+        } else {
+        document.getElementById('error-msg').style.opacity = '1';
+        setTimeout(() => document.getElementById('error-msg').style.opacity = '0', 2000);
+            }
+        }
+
+        function toggleTheme() { document.body.classList.toggle('dark'); }
+
+        function showPanel(id) {
+            ['gallery', 'games', 'chat'].forEach(p => document.getElementById(`${p}-panel`).classList.add('hidden'));
+            document.getElementById(`${id}-panel`).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`nav-${id}`).classList.add('active');
+            if(id === 'games') resizeCanvas();
+        }
+
+        function filterType(type) {
+            const bp = document.getElementById('btnPhoto');
+            const bv = document.getElementById('btnVideo');
+            if(type === 'photo') {
+                bp.className = "px-6 py-2.5 rounded-full font-black text-[10px] transition-all bg-pink-500 text-white shadow-lg";
+                bv.className = "px-6 py-2.5 rounded-full font-black text-[10px] transition-all border border-pink-500 text-pink-500";
+            } else {
+                bv.className = "px-6 py-2.5 rounded-full font-black text-[10px] transition-all bg-pink-500 text-white shadow-lg";
+                bp.className = "px-6 py-2.5 rounded-full font-black text-[10px] transition-all border border-pink-500 text-pink-500";
+            }
+            renderGallery(type);
+        }
+
+        function renderGallery(type) {
+            const grid = document.getElementById('gallery-grid');
+            const data = type === 'photo' ? DAFTAR_FOTO : DAFTAR_VIDEO;
+            grid.innerHTML = data.map((item, index) => {
+                const itemId = `${type}-${index}`;
+                const meta = state.interactions[itemId] || { liked: 0, usersLiked: [], comments: [] };
+                return `
+                    <div class="neon-card p-2 md:p-5 animate-up flex flex-col">
+                        <div class="aspect-square rounded-[12px] md:rounded-[20px] overflow-hidden mb-2 bg-slate-200 relative border border-black/5 cursor-pointer" onclick="openPreview('${item.src}', '${type}')">
+                            ${type === 'photo' ? `<img src="${item.src}" class="w-full h-full object-cover">` : 
+                            `<video src="${item.src}" loop muted playsinline class="w-full h-full object-cover"></video>`}
+                        </div>
+                        
+                        <div class="flex justify-between items-center px-0.5 mb-2">
+                            <h4 class="font-black text-[9px] md:text-sm uppercase truncate pr-1 italic">${item.caption}</h4>
+                            <button onclick="likeItem('${itemId}', '${type}')" class="text-[8px] md:text-xs font-black ${meta.usersLiked.includes(activeUser) ? 'text-pink-500' : 'opacity-40'} flex items-center gap-0.5 bg-pink-500/5 px-1.5 py-0.5 rounded-full border border-pink-500/10">❤️ ${meta.liked}</button>
+                        </div>
+                        
+                        <div class="space-y-1.5 mb-2 h-[80px] md:h-[120px] overflow-y-auto scroll-hide border-t border-pink-500/5 pt-2 px-0.5">
+                             ${meta.comments.length === 0 ? '<p class="text-[7px] opacity-30 italic text-center py-1">No comments...</p>' : ''}
+                             ${meta.comments.map(c => `
+                                <div class="flex items-start gap-1.5">
+                                    <img src="${getAvatarUrl(c.user)}" class="comment-avatar flex-shrink-0">
+                                    <div class="text-[8px] md:text-xs leading-tight bg-black/5 dark:bg-white/5 p-1.5 rounded-lg flex-grow">
+                                        <p class="text-pink-500 font-black text-[7px] uppercase tracking-tighter">${c.user}</p> 
+                                        <p class="font-medium">${c.text}</p>
+                                    </div>
+                                </div>`).join('')}
+                        </div>
+
+                        <div class="flex gap-1">
+                            <input id="in-${itemId}" placeholder="Tulis..." class="app-input flex-grow p-2 rounded-lg text-[8px] md:text-xs outline-none border-none shadow-inner" onkeypress="if(event.key === 'Enter') addComment('${itemId}', '${type}')">
+                            <button onclick="addComment('${itemId}', '${type}')" class="bg-pink-500 text-white px-2 rounded-lg font-black text-[8px] md:text-xs transition-transform active:scale-90">➤</button>
+                        </div>
+                    </div>`;
+            }).join('');
+        }
+        function autoUnlock(name) {
+        activeUser = name;
+        document.getElementById('userAvatarImg').src = getAvatarUrl(name);
+        document.getElementById('displayUserName').innerText = name;
+
+        document.getElementById('gate-screen').style.display = 'none';
+        document.getElementById('app-container').classList.remove('hidden');
+        document.getElementById('main-nav').classList.remove('hidden');
+        document.getElementById('music-ui').classList.remove('hidden');
+
+        updateCounter();
+        renderGallery('photo');
+        renderChat();
+        }
+
+        function logout() {
+        localStorage.setItem("archive_logged", "true");
+        localStorage.setItem("archive_user", name);
+
+        location.reload();
+        }
+
+
+        // --- Fitur Menggambar ---
+        let painting = false;
+        let ctx;
+        function initDrawing() {
+            const canvas = document.getElementById('drawingCanvas');
+            ctx = canvas.getContext('2d');
+            
+            function startPosition(e) { painting = true; draw(e); }
+            function finishedPosition() { painting = false; ctx.beginPath(); }
+            function draw(e) {
+                if (!painting) return;
+                
+                const color = document.getElementById('penColor').value;
+                const size = document.getElementById('penSize').value;
+                
+                ctx.lineWidth = size;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = color;
+
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            }
+
+            canvas.addEventListener('mousedown', startPosition);
+            canvas.addEventListener('mouseup', finishedPosition);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startPosition(e.touches[0]); });
+            canvas.addEventListener('touchend', finishedPosition);
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+        }
+
+        function resizeCanvas() {
+            const canvas = document.getElementById('drawingCanvas');
+            if(!canvas) return;
+            const parent = canvas.parentElement;
+            canvas.width = parent.offsetWidth;
+            canvas.height = parent.offsetHeight;
+        }
+
+        function clearCanvas() { ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height); }
+
+        // --- Fitur Tebak-tebakan ---
+        let curTebakan = null;
+        function acakTebakan() {
+            curTebakan = TEBAKAN[Math.floor(Math.random() * TEBAKAN.length)];
+            document.getElementById('tebakSoal').innerText = curTebakan.q;
+            document.getElementById('tebakJawab').innerText = "";
+            document.getElementById('tebakJawab').classList.add('hidden');
+            document.getElementById('userGuess').value = "";
+            document.getElementById('tebakInputArea').classList.remove('hidden');
+            
+            const btn = document.getElementById('btnReveal');
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.disabled = false;
+        }
+
+        function checkTebakan() {
+            const guess = document.getElementById('userGuess').value.trim().toLowerCase();
+            const answer = curTebakan.a.toLowerCase();
+            const feedback = document.getElementById('tebakJawab');
+            
+            feedback.classList.remove('hidden');
+            if(guess === answer) {
+                feedback.innerText = "✅ anjai benner jawabannya: " + curTebakan.a;
+                feedback.className = "font-black text-green-500 text-[10px] uppercase italic mt-2 animate-up";
+            } else {
+                feedback.innerText = "salah pea coba lagi...";
+                feedback.className = "font-black text-red-500 text-[10px] uppercase italic mt-2 animate-up";
+            }
+        }
+
+        function revealJawaban() {
+            const feedback = document.getElementById('tebakJawab');
+            feedback.innerText = "kata rerep gembel, nyerah Jawabannya: " + curTebakan.a;
+            feedback.className = "font-black text-pink-500 text-[10px] uppercase italic mt-2 animate-up";
+            feedback.classList.remove('hidden');
+        }
+
+        // --- Existing Functions ---
+        function likeItem(id, type) {
+            if(!state.interactions[id]) state.interactions[id] = { liked: 0, usersLiked: [], comments: [] };
+            const m = state.interactions[id];
+            const idx = m.usersLiked.indexOf(activeUser);
+            if(idx === -1) { m.liked++; m.usersLiked.push(activeUser); } else { m.liked--; m.usersLiked.splice(idx, 1); }
+            save(); renderGallery(type);
+        }
+
+        function addComment(id, type) {
+            const el = document.getElementById(`in-${id}`);
+            if(!el.value.trim()) return;
+            if(!state.interactions[id]) state.interactions[id] = { liked: 0, usersLiked: [], comments: [] };
+            state.interactions[id].comments.push({ user: activeUser, text: el.value });
+            el.value = ''; save(); renderGallery(type);
+        }
+
+        function cekKhodam() {
+            const name = document.getElementById('khodamNameInput').value.trim();
+            if(!name) return;
+            document.getElementById('khodamRitual').classList.remove('hidden');
+            document.getElementById('khodamDisplay').classList.add('hidden');
+            setTimeout(() => {
+                document.getElementById('khodamRitual').classList.add('hidden');
+                document.getElementById('khodamDisplay').classList.remove('hidden');
+                let h = 0; for(let i=0; i<name.length; i++) h += name.charCodeAt(i);
+                const res = khodamList[h % khodamList.length];
+                document.getElementById('khodamResult').innerText = res.name;
+                document.getElementById('khodamImg').src = res.img;
+            }, 1500);
+        }
+
+        function cekJodoh() {
+            const n1 = document.getElementById('love1').value.trim().toLowerCase();
+            const n2 = document.getElementById('love2').value.trim().toLowerCase();
+            if(!n1 || !n2) return;
+            const regexRaka = /(ra+ka+|ra+k|aka+|rka+kak)/i;
+            const regexRevanie = /(revanie+|vani+|vany+|rerep|revani+)/i;
+            const regexIka = /(ika+|ik\b|marlysca|lysca+|lesmana)/i;
+            let score = 0, msg = "";
+            if ((regexRaka.test(n1) && regexRevanie.test(n2)) || (regexRaka.test(n2) && regexRevanie.test(n1))) { score = 100; msg = "100% ✨ PASANGAN SEJATI"; } 
+            else if ((regexRaka.test(n1) && regexIka.test(n2)) || (regexRaka.test(n2) && regexIka.test(n1))) { score = 0; msg = "0% ❌ TIDAK COCOK"; } 
+            else { score = Math.floor(Math.random() * 60) + 20; msg = "COCOK JUGA 🔥"; }
+            document.getElementById('loveResult').innerHTML = `<div class="p-3 rounded-xl bg-pink-500 text-white w-full animate-up shadow-lg"><p class="text-xl font-black">${score}%</p><p class="text-[8px] uppercase font-bold tracking-widest">${msg}</p></div>`;
+        }
+
+        function sendChat() {
+            const el = document.getElementById('chatInput');
+            if(!el.value.trim()) return;
+            state.chat.push({
+            id: Date.now(),
+            user: activeUser,
+            text: el.value
+            });
+
+            el.value = ''; save(); renderChat();
+        }
+
+        function renderChat() {
+            const box = document.getElementById('chatBox');
+            box.innerHTML = state.chat.map(c => {
+            const isMine = c.user === activeUser;
+
+                return `
+            <div class="flex items-end gap-2 ${isMine ? 'flex-row-reverse' : ''}">
+            <img src="${getAvatarUrl(c.user)}" class="w-7 h-7 rounded-full border border-pink-500/30">
+
+            <div class="relative max-w-[80%] ${
+            isMine ? 'bg-pink-500 text-white' : 'bg-white dark:bg-zinc-800'
+            } p-3 rounded-2xl shadow-sm">
+
+            <p class="text-[8px] font-black opacity-50 mb-1 uppercase tracking-wider">
+                ${c.user}
+            </p>
+
+            <p class="text-[10px] font-bold leading-relaxed">
+                ${c.text}
+            </p>
+                ${
+                isMine
+                ? `<button onclick="deleteChat(${c.id})"
+                    class="absolute -top-2 -right-2 w-5 h-5 bg-black/60 text-white rounded-full text-[9px] hover:bg-red-500 transition">
+                    ✕
+                  </button>`
+                : ''
+                }
+             </div>
+            </div>`;
+            }).join('');
+
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function deleteChat(id) {
+            state.chat = state.chat.filter(c => c.id !== id);
+            save(); renderChat();
+        }
+
+        function save() { localStorage.setItem('archive_pro_vfinal', JSON.stringify(state)); }
+        function updateCounter() {
+            const diff = Math.floor((new Date() - CONFIG.startDate) / (1000 * 60 * 60 * 24));
+            document.getElementById('counter').innerText = `${diff} rereppdanrakaa`;
+        }
+    </script>
+</body>
+</html>
