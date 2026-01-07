@@ -742,7 +742,7 @@ body > * {
             feedback.classList.remove('hidden');
         }
 
-       async function likeItem(id) {
+   window.likeItem = async function (id) {
   const ref = doc(db, "interactions", id);
   const snap = await getDoc(ref);
 
@@ -763,7 +763,7 @@ body > * {
   await setDoc(ref, data);
 }
         
-async function addComment(id) {
+window.addComment = async function (id) {
   const input = document.getElementById(`in-${id}`);
   if (!input.value.trim()) return;
 
@@ -887,6 +887,7 @@ async function addComment(id) {
 </body>
 
 </html>
+
 
 
 
