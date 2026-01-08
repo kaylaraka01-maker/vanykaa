@@ -837,79 +837,69 @@ window.likeItem = async function (id) {
 
 function listenItem(id) {
     const ref = window.doc(window.db, "interactions", id);
+
     window.onSnapshot(ref, (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
 
-        // --- Update Like (Tetap sama) ---
+        // LIKE
         const likeBtn = document.getElementById(`like-${id}`);
         if (likeBtn) {
             const count = data.liked || 0;
-            const isLiked = data.usersLiked && data.usersLiked.includes(activeUser);
+            const isLiked = data.usersLiked?.includes(activeUser);
             likeBtn.innerHTML = `❤️ ${count}`;
             likeBtn.style.color = isLiked ? "#ff7eb3" : "gray";
         }
-        // --- Update Komentar (DENGAN TOMBOL HAPUS) ---
-        // Di dalam window.onSnapshot(ref, (snap) => { ... })
-const box = document.getElementById(`comments-${id}`);
-if (box && data.comments) {
-    box.innerHTML = data.comments.map((c, index) => {
-        const isMyComment = c.user === activeUser;
-        return `
-        <div class="flex items-start justify-between gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-lg border border-pink-500/5 group">
-            <div class="flex items-start gap-2">
-                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.user)}&background=ff7eb3&color=fff&size=32" 
-                     class="w-4 h-4 rounded-full border border-pink-500/30">
-                <div class="flex flex-col text-left">
-                    <span class="font-black text-[7px] text-pink-500 uppercase">${c.user}</span>
-                    <span class="text-[9px] leading-tight text-slate-700 dark:text-slate-200">${c.text}</span>
+
+        // KOMENTAR
+        const box = document.getElementById(`comments-${id}`);
+        if (box && data.comments) {
+            box.innerHTML = data.comments.map((c, index) => {
+                const isMyComment = c.user === activeUser;
+                return `
+                <div class="flex items-start justify-between gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-lg border border-pink-500/5">
+                    <div class="flex items-start gap-2">
+                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.user)}&background=ff7eb3&color=fff&size=32"
+                             class="w-4 h-4 rounded-full border border-pink-500/30">
+                        <div class="flex flex-col">
+                            <span class="font-black text-[7px] text-pink-500 uppercase">${c.user}</span>
+                            <span class="text-[9px]">${c.text}</span>
+                        </div>
+                    </div>
+                    ${
+                        isMyComment
+                        ? `<button onclick="deleteComment('${id}', ${index})"
+                                class="text-[10px] text-gray-400 hover:text-red-500 font-bold">✕</button>`
+                        : ""
+                    }
                 </div>
-            </div>
-            
-            ${isMyComment ? `
-                <button onclick="deleteComment('${id}', ${index})" 
-                        class="text-[10px] text-gray-400 hover:text-red-500 transition-colors px-1 font-bold">
-                    ✕
-                </button>
-            ` : ''}
-        </div>
-    `}).join('');
-    box.scrollTop = box.scrollHeight;
-}
-        
-       window.deleteComment = async function (id, index) {
-    // Memberikan konfirmasi agar tidak terhapus tidak sengaja
-    if (!confirm("Hapus komentar ini?")) return;
-
-    try {
-        const ref = window.doc(window.db, "interactions", id);
-        const snap = await window.getDoc(ref);
-
-        if (snap.exists()) {
-            const data = snap.data();
-            let currentComments = data.comments || [];
-            
-            // Validasi: pastikan yang menghapus adalah pemilik komentar
-            if (currentComments[index].user !== activeUser) {
-                alert("Kamu tidak bisa menghapus komentar orang lain!");
-                return;
-            }
-
-            // Menghapus 1 item berdasarkan index yang diklik
-            currentComments.splice(index, 1);
-
-            // Update kembali seluruh array comments ke Firebase
-            await window.updateDoc(ref, {
-                comments: currentComments
-            });
-            
-            console.log("Komentar berhasil dihapus dari Firebase ✅");
+                `;
+            }).join('');
+            box.scrollTop = box.scrollHeight;
         }
-    } catch (error) {
-        console.error("Gagal menghapus komentar:", error);
-        alert("Terjadi kesalahan saat menghapus.");
-    }
+    });
+}
+
+        
+      window.deleteComment = async function (id, index) {
+    if (!confirm("Hapus komentar?")) return;
+
+    const ref = window.doc(window.db, "interactions", id);
+    const snap = await window.getDoc(ref);
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+    const comments = data.comments || [];
+
+    if (!comments[index] || comments[index].user !== activeUser) return;
+
+    comments.splice(index, 1);
+
+    await window.updateDoc(ref, {
+        comments: comments
+    });
 };
+
         function cekJodoh() {
             const n1 = document.getElementById('love1').value.trim().toLowerCase();
             const n2 = document.getElementById('love2').value.trim().toLowerCase();
@@ -984,6 +974,7 @@ if (box && data.comments) {
 </body>
 
 </html>
+
 
 
 
