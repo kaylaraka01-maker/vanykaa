@@ -486,18 +486,21 @@ body > * {
         let activeUser = "";
         let currentTrackIndex = 0;
 
-        window.onload = () => {
-
+       window.onload = () => {
         // MUSIK
         loadTrack(0);
         document.getElementById('bgMusic').onended = () => nextMusic();
-        // GAMBAR
+    
+        // GAMBAR & CANVAS
         initDrawing();
         resizeCanvas();
-        // AUTO LOGIN
-        if (localStorage.getItem("archive_logged") === "true") {
-        const name = localStorage.getItem("archive_user");
-        if (name) autoUnlock(name);
+
+        // AUTO LOGIN (Perbaikan di sini)
+        const isLogged = localStorage.getItem("archive_logged");
+        const savedUser = localStorage.getItem("archive_user");
+    
+        if (isLogged === "true" && savedUser) {
+        autoUnlock(savedUser);
         }
         };
 
@@ -541,18 +544,24 @@ body > * {
 }
 
         window.unlockApp = async function () {
-        const name = document.getElementById('userNameInput').value.trim();
-        const pass = document.getElementById('passInput').value;
+    const name = document.getElementById('userNameInput').value.trim();
+    const pass = document.getElementById('passInput').value;
 
-        if(!name) return;
+    if(!name) return;
 
-        const inputHash = await hash(pass);
+    const inputHash = await hash(pass);
 
-        if(inputHash === PASSWORD_HASH) {
+    if(inputHash === PASSWORD_HASH) {
         activeUser = name;
+        
+        // SIMPAN STATUS LOGIN AGAR BISA REFRESH
+        localStorage.setItem("archive_logged", "true");
+        localStorage.setItem("archive_user", name);
+
         document.getElementById('userAvatarImg').src = getAvatarUrl(name);
         document.getElementById('displayUserName').innerText = name;
         document.getElementById('gate-screen').style.opacity = '0';
+        
         setTimeout(() => {
             document.getElementById('gate-screen').style.display = 'none';
             document.getElementById('app-container').classList.remove('hidden');
@@ -562,12 +571,11 @@ body > * {
             renderGallery('photo'); 
             renderChat();
         }, 1000);
-        } else {
+    } else {
         document.getElementById('error-msg').style.opacity = '1';
         setTimeout(() => document.getElementById('error-msg').style.opacity = '0', 2000);
-            }
-        }
-
+    }
+}
         function toggleTheme() { document.body.classList.toggle('dark'); }
 
         function showPanel(id) {
@@ -646,14 +654,14 @@ body > * {
         renderChat();
         }
 
-        function logout() {
-        localStorage.setItem("archive_logged", "true");
-        localStorage.setItem("archive_user", activeUser);
+       function logout() {
+    // Ubah ke false dan hapus user
+    localStorage.setItem("archive_logged", "false");
+    localStorage.removeItem("archive_user");
 
-
-        location.reload();
-        }
-
+    // Refresh halaman untuk kembali ke layar login
+    location.reload();
+}
 
         // --- Fitur Menggambar ---
         let painting = false;
@@ -976,6 +984,7 @@ if (box && data.comments) {
 </body>
 
 </html>
+
 
 
 
