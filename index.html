@@ -829,40 +829,67 @@ window.likeItem = async function (id) {
 
 function listenItem(id) {
     const ref = window.doc(window.db, "interactions", id);
-    // onSnapshot akan mendeteksi perubahan di HP orang lain secara otomatis
     window.onSnapshot(ref, (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
 
-        // Update Tampilan Tombol Like
+        // --- Update Like (Tetap sama) ---
         const likeBtn = document.getElementById(`like-${id}`);
         if (likeBtn) {
             const count = data.liked || 0;
             const isLiked = data.usersLiked && data.usersLiked.includes(activeUser);
             likeBtn.innerHTML = `❤️ ${count}`;
-            
-            // Beri warna pink jika kita sudah like
             likeBtn.style.color = isLiked ? "#ff7eb3" : "gray";
-            likeBtn.classList.toggle('scale-110', isLiked);
         }
 
-        // Update Tampilan Komentar
+        // --- Update Komentar (DENGAN TOMBOL HAPUS) ---
         const box = document.getElementById(`comments-${id}`);
         if (box && data.comments) {
-            box.innerHTML = data.comments.map(c => `
-                <div class="flex items-start gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-lg border border-pink-500/5">
-                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.user)}&background=ff7eb3&color=fff&size=32" 
-                         class="w-4 h-4 rounded-full border border-pink-500/30">
-                    <div class="flex flex-col">
-                        <span class="font-black text-[7px] text-pink-500 uppercase">${c.user}</span>
-                        <span class="text-[9px] leading-tight">${c.text}</span>
+            box.innerHTML = data.comments.map((c, index) => {
+                const isMyComment = c.user === activeUser; // Cek pemilik komentar
+                return `
+                <div class="flex items-start justify-between gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-lg border border-pink-500/5 group">
+                    <div class="flex items-start gap-2">
+                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.user)}&background=ff7eb3&color=fff&size=32" 
+                             class="w-4 h-4 rounded-full border border-pink-500/30">
+                        <div class="flex flex-col">
+                            <span class="font-black text-[7px] text-pink-500 uppercase">${c.user}</span>
+                            <span class="text-[9px] leading-tight">${c.text}</span>
+                        </div>
                     </div>
+                    
+                    ${isMyComment ? `
+                        <button onclick="deleteComment('${id}', ${index})" 
+                                class="text-[10px] text-gray-400 hover:text-red-500 transition-colors px-1">
+                            ✕
+                        </button>
+                    ` : ''}
                 </div>
-            `).join('');
+            `}).join('');
             box.scrollTop = box.scrollHeight;
         }
     });
 }
+        
+        window.deleteComment = async function (id, index) {
+    if (!confirm("Hapus komentar ini?")) return;
+
+    const ref = window.doc(window.db, "interactions", id);
+    const snap = await window.getDoc(ref);
+
+    if (snap.exists()) {
+        const data = snap.data();
+        let newComments = [...data.comments];
+        
+        // Hapus komentar berdasarkan index yang diklik
+        newComments.splice(index, 1);
+
+        // Update kembali ke Firebase
+        await window.updateDoc(ref, {
+            comments: newComments
+        });
+    }
+};
         function cekJodoh() {
             const n1 = document.getElementById('love1').value.trim().toLowerCase();
             const n2 = document.getElementById('love2').value.trim().toLowerCase();
@@ -937,6 +964,7 @@ function listenItem(id) {
 </body>
 
 </html>
+
 
 
 
