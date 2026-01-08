@@ -841,53 +841,65 @@ function listenItem(id) {
             likeBtn.innerHTML = `❤️ ${count}`;
             likeBtn.style.color = isLiked ? "#ff7eb3" : "gray";
         }
-
         // --- Update Komentar (DENGAN TOMBOL HAPUS) ---
-        const box = document.getElementById(`comments-${id}`);
-        if (box && data.comments) {
-            box.innerHTML = data.comments.map((c, index) => {
-                const isMyComment = c.user === activeUser; // Cek pemilik komentar
-                return `
-                <div class="flex items-start justify-between gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-lg border border-pink-500/5 group">
-                    <div class="flex items-start gap-2">
-                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.user)}&background=ff7eb3&color=fff&size=32" 
-                             class="w-4 h-4 rounded-full border border-pink-500/30">
-                        <div class="flex flex-col">
-                            <span class="font-black text-[7px] text-pink-500 uppercase">${c.user}</span>
-                            <span class="text-[9px] leading-tight">${c.text}</span>
-                        </div>
-                    </div>
-                    
-                    ${isMyComment ? `
-                        <button onclick="deleteComment('${id}', ${index})" 
-                                class="text-[10px] text-gray-400 hover:text-red-500 transition-colors px-1">
-                            ✕
-                        </button>
-                    ` : ''}
+        // Di dalam window.onSnapshot(ref, (snap) => { ... })
+const box = document.getElementById(`comments-${id}`);
+if (box && data.comments) {
+    box.innerHTML = data.comments.map((c, index) => {
+        const isMyComment = c.user === activeUser;
+        return `
+        <div class="flex items-start justify-between gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-lg border border-pink-500/5 group">
+            <div class="flex items-start gap-2">
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.user)}&background=ff7eb3&color=fff&size=32" 
+                     class="w-4 h-4 rounded-full border border-pink-500/30">
+                <div class="flex flex-col text-left">
+                    <span class="font-black text-[7px] text-pink-500 uppercase">${c.user}</span>
+                    <span class="text-[9px] leading-tight text-slate-700 dark:text-slate-200">${c.text}</span>
                 </div>
-            `}).join('');
-            box.scrollTop = box.scrollHeight;
-        }
-    });
+            </div>
+            
+            ${isMyComment ? `
+                <button onclick="deleteComment('${id}', ${index})" 
+                        class="text-[10px] text-gray-400 hover:text-red-500 transition-colors px-1 font-bold">
+                    ✕
+                </button>
+            ` : ''}
+        </div>
+    `}).join('');
+    box.scrollTop = box.scrollHeight;
 }
         
-        window.deleteComment = async function (id, index) {
+       window.deleteComment = async function (id, index) {
+    // Memberikan konfirmasi agar tidak terhapus tidak sengaja
     if (!confirm("Hapus komentar ini?")) return;
 
-    const ref = window.doc(window.db, "interactions", id);
-    const snap = await window.getDoc(ref);
+    try {
+        const ref = window.doc(window.db, "interactions", id);
+        const snap = await window.getDoc(ref);
 
-    if (snap.exists()) {
-        const data = snap.data();
-        let newComments = [...data.comments];
-        
-        // Hapus komentar berdasarkan index yang diklik
-        newComments.splice(index, 1);
+        if (snap.exists()) {
+            const data = snap.data();
+            let currentComments = data.comments || [];
+            
+            // Validasi: pastikan yang menghapus adalah pemilik komentar
+            if (currentComments[index].user !== activeUser) {
+                alert("Kamu tidak bisa menghapus komentar orang lain!");
+                return;
+            }
 
-        // Update kembali ke Firebase
-        await window.updateDoc(ref, {
-            comments: newComments
-        });
+            // Menghapus 1 item berdasarkan index yang diklik
+            currentComments.splice(index, 1);
+
+            // Update kembali seluruh array comments ke Firebase
+            await window.updateDoc(ref, {
+                comments: currentComments
+            });
+            
+            console.log("Komentar berhasil dihapus dari Firebase ✅");
+        }
+    } catch (error) {
+        console.error("Gagal menghapus komentar:", error);
+        alert("Terjadi kesalahan saat menghapus.");
     }
 };
         function cekJodoh() {
@@ -964,6 +976,7 @@ function listenItem(id) {
 </body>
 
 </html>
+
 
 
 
