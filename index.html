@@ -597,7 +597,6 @@ body > * {
 
     grid.innerHTML = data.map((item, index) => {
         const itemId = `${type}-${index}`;
-
         return `
         <div class="neon-card p-2 md:p-5 animate-up flex flex-col">
             <div class="aspect-square overflow-hidden mb-2 cursor-pointer"
@@ -625,11 +624,6 @@ body > * {
         </div>
         `;
     }).join('');
-
-    data.forEach((_, index) => {
-        listenItem(`${type}-${index}`);
-    });
-}
 
   // setelah tampil, baru sync firestore
   data.forEach((_, index) => {
@@ -745,25 +739,33 @@ body > * {
             feedback.classList.remove('hidden');
         }
 
- window.likeItem = async function (id) {
+window.likeItem = async function (id) {
     if (!activeUser) return;
+    
+    // Referensi ke dokumen berdasarkan ID foto/video
     const ref = window.doc(window.db, "interactions", id);
     const snap = await window.getDoc(ref);
 
     if (!snap.exists()) {
-        await window.setDoc(ref, { liked: 1, usersLiked: [activeUser], comments: [] });
+        // Jika data belum ada di Firebase, buat baru
+        await window.setDoc(ref, { 
+            liked: 1, 
+            usersLiked: [activeUser], 
+            comments: [] 
+        });
     } else {
         const data = snap.data();
         const usersLiked = data.usersLiked || [];
         
         if (!usersLiked.includes(activeUser)) {
-            // Jika belum like: Tambahkan
+            // PROSES LIKE: Tambah angka dan masukkan user ke array
             await window.updateDoc(ref, {
                 liked: (data.liked || 0) + 1,
                 usersLiked: window.arrayUnion(activeUser)
             });
         } else {
-            // Jika sudah like: Hapus (Unlike)
+            // PROSES UNLIKE: Kurangi angka dan hapus user dari array
+            // Kita filter manual karena arrayRemove butuh value yang sama persis
             const newUsers = usersLiked.filter(u => u !== activeUser);
             await window.updateDoc(ref, {
                 liked: Math.max(0, (data.liked || 1) - 1),
@@ -772,7 +774,7 @@ body > * {
         }
     }
 };
-
+        
 window.addComment = async function (id) {
     const input = document.getElementById(`in-${id}`);
     const text = input.value.trim();
@@ -792,23 +794,59 @@ window.addComment = async function (id) {
     input.value = "";
 };
 
+window.likeItem = async function (id) {
+    if (!activeUser) return;
+    const ref = window.doc(window.db, "interactions", id);
+    const snap = await window.getDoc(ref);
+
+    if (!snap.exists()) {
+        // Jika dokumen belum ada di database
+        await window.setDoc(ref, { 
+            liked: 1, 
+            usersLiked: [activeUser], 
+            comments: [] 
+        });
+    } else {
+        const data = snap.data();
+        const usersLiked = data.usersLiked || [];
+        
+        if (!usersLiked.includes(activeUser)) {
+            // JIKA BELUM LIKE: Tambah angka dan masukkan nama user ke list
+            await window.updateDoc(ref, {
+                liked: (data.liked || 0) + 1,
+                usersLiked: window.arrayUnion(activeUser)
+            });
+        } else {
+            // JIKA SUDAH LIKE (UNLIKE): Kurangi angka dan hapus nama user dari list
+            const newUsers = usersLiked.filter(u => u !== activeUser);
+            await window.updateDoc(ref, {
+                liked: Math.max(0, (data.liked || 1) - 1),
+                usersLiked: newUsers
+            });
+        }
+    }
+};
+
 function listenItem(id) {
     const ref = window.doc(window.db, "interactions", id);
+    // onSnapshot akan mendeteksi perubahan di HP orang lain secara otomatis
     window.onSnapshot(ref, (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
 
-        // Update Button Like
+        // Update Tampilan Tombol Like
         const likeBtn = document.getElementById(`like-${id}`);
         if (likeBtn) {
             const count = data.liked || 0;
             const isLiked = data.usersLiked && data.usersLiked.includes(activeUser);
             likeBtn.innerHTML = `❤️ ${count}`;
+            
+            // Beri warna pink jika kita sudah like
             likeBtn.style.color = isLiked ? "#ff7eb3" : "gray";
-            likeBtn.style.opacity = isLiked ? "1" : "0.5";
+            likeBtn.classList.toggle('scale-110', isLiked);
         }
 
-        // Update List Komentar dengan Avatar
+        // Update Tampilan Komentar
         const box = document.getElementById(`comments-${id}`);
         if (box && data.comments) {
             box.innerHTML = data.comments.map(c => `
@@ -899,6 +937,7 @@ function listenItem(id) {
 </body>
 
 </html>
+
 
 
 
