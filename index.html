@@ -592,38 +592,44 @@ body > * {
         }
 
        function renderGallery(type) {
-  const grid = document.getElementById('gallery-grid');
-  const data = type === 'photo' ? DAFTAR_FOTO : DAFTAR_VIDEO;
+    const grid = document.getElementById('gallery-grid');
+    const data = type === 'photo' ? DAFTAR_FOTO : DAFTAR_VIDEO;
 
-  grid.innerHTML = data.map((item, index) => {
-    const itemId = `${type}-${index}`;
+    grid.innerHTML = data.map((item, index) => {
+        const itemId = `${type}-${index}`;
 
-    return `
-      <div class="neon-card p-2 md:p-5 animate-up flex flex-col">
-        <div class="aspect-square overflow-hidden mb-2 cursor-pointer"
-          onclick="openPreview('${item.src}', '${type}')">
-          ${
-            type === 'photo'
-              ? `<img src="${item.src}" class="w-full h-full object-cover">`
-              : `<video src="${item.src}" muted loop class="w-full h-full object-cover"></video>`
-          }
+        return `
+        <div class="neon-card p-2 md:p-5 animate-up flex flex-col">
+            <div class="aspect-square overflow-hidden mb-2 cursor-pointer"
+                onclick="openPreview('${item.src}', '${type}')">
+                ${type === 'photo'
+                    ? `<img src="${item.src}" class="w-full h-full object-cover">`
+                    : `<video src="${item.src}" muted loop class="w-full h-full object-cover"></video>`
+                }
+            </div>
+
+            <div class="flex justify-between items-center mb-2">
+                <h4 class="font-black text-[9px] italic">${item.caption}</h4>
+                <button id="like-${itemId}" onclick="likeItem('${itemId}')" class="text-[10px] font-bold transition-all active:scale-125">
+                    ❤️ 0
+                </button>
+            </div>
+
+            <div id="comments-${itemId}" class="text-[8px] h-[100px] overflow-y-auto space-y-2 mb-2 scroll-hide"></div>
+
+            <div class="flex gap-1 mt-auto">
+                <input id="in-${itemId}" placeholder="Tulis komentar..." class="app-input flex-grow p-2 rounded-lg text-[9px] outline-none"
+                    onkeypress="if(event.key==='Enter') addComment('${itemId}')">
+                <button onclick="addComment('${itemId}')" class="bg-pink-500 text-white px-2 rounded-lg">➤</button>
+            </div>
         </div>
+        `;
+    }).join('');
 
-        <div class="flex justify-between items-center mb-2">
-          <h4 class="font-black text-[9px] italic">${item.caption}</h4>
-          <button id="like-${itemId}" class="text-[8px] opacity-40">❤️ 0</button>
-        </div>
-
-        <div id="comments-${itemId}" class="text-[8px] h-[80px] overflow-y-auto"></div>
-
-        <div class="flex gap-1">
-          <input id="in-${itemId}" class="app-input flex-grow"
-            onkeypress="if(event.key==='Enter') addComment('${itemId}')">
-          <button onclick="addComment('${itemId}')">➤</button>
-        </div>
-      </div>
-    `;
-  }).join('');
+    data.forEach((_, index) => {
+        listenItem(`${type}-${index}`);
+    });
+}
 
   // setelah tampil, baru sync firestore
   data.forEach((_, index) => {
@@ -739,8 +745,8 @@ body > * {
             feedback.classList.remove('hidden');
         }
 
-  window.likeItem = async function (id) {
-    if (!activeUser) return alert("Login dulu!");
+ window.likeItem = async function (id) {
+    if (!activeUser) return;
     const ref = window.doc(window.db, "interactions", id);
     const snap = await window.getDoc(ref);
 
@@ -748,14 +754,17 @@ body > * {
         await window.setDoc(ref, { liked: 1, usersLiked: [activeUser], comments: [] });
     } else {
         const data = snap.data();
-        const hasLiked = data.usersLiked && data.usersLiked.includes(activeUser);
-        if (!hasLiked) {
+        const usersLiked = data.usersLiked || [];
+        
+        if (!usersLiked.includes(activeUser)) {
+            // Jika belum like: Tambahkan
             await window.updateDoc(ref, {
                 liked: (data.liked || 0) + 1,
                 usersLiked: window.arrayUnion(activeUser)
             });
         } else {
-            const newUsers = data.usersLiked.filter(u => u !== activeUser);
+            // Jika sudah like: Hapus (Unlike)
+            const newUsers = usersLiked.filter(u => u !== activeUser);
             await window.updateDoc(ref, {
                 liked: Math.max(0, (data.liked || 1) - 1),
                 usersLiked: newUsers
@@ -789,17 +798,28 @@ function listenItem(id) {
         if (!snap.exists()) return;
         const data = snap.data();
 
+        // Update Button Like
         const likeBtn = document.getElementById(`like-${id}`);
         if (likeBtn) {
-            likeBtn.innerText = `❤️ ${data.liked || 0}`;
+            const count = data.liked || 0;
             const isLiked = data.usersLiked && data.usersLiked.includes(activeUser);
+            likeBtn.innerHTML = `❤️ ${count}`;
             likeBtn.style.color = isLiked ? "#ff7eb3" : "gray";
+            likeBtn.style.opacity = isLiked ? "1" : "0.5";
         }
 
+        // Update List Komentar dengan Avatar
         const box = document.getElementById(`comments-${id}`);
         if (box && data.comments) {
             box.innerHTML = data.comments.map(c => `
-                <div class="text-[9px] mb-1"><b>${c.user}:</b> ${c.text}</div>
+                <div class="flex items-start gap-2 bg-slate-50 dark:bg-slate-800/50 p-1.5 rounded-lg border border-pink-500/5">
+                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(c.user)}&background=ff7eb3&color=fff&size=32" 
+                         class="w-4 h-4 rounded-full border border-pink-500/30">
+                    <div class="flex flex-col">
+                        <span class="font-black text-[7px] text-pink-500 uppercase">${c.user}</span>
+                        <span class="text-[9px] leading-tight">${c.text}</span>
+                    </div>
+                </div>
             `).join('');
             box.scrollTop = box.scrollHeight;
         }
@@ -879,6 +899,7 @@ function listenItem(id) {
 </body>
 
 </html>
+
 
 
 
