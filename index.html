@@ -47,6 +47,23 @@
             pointer-events: none;
         z-index: 5;
 }
+.mood-pill {
+    flex: 0 0 auto;
+    padding: 10px 15px;
+    border-radius: 20px;
+    background: var(--input-bg);
+    border: 1px solid rgba(255,126,179,0.2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: slideInUp 0.5s ease-out forwards;
+}
+.mood-circle {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    box-shadow: 0 0 10px currentColor;
+}
 /* =========================
    ANIMATED NIGHT OVERLAY
    ========================= */
@@ -317,7 +334,33 @@ body > * {
             </section>
 
             <section id="games-panel" class="hidden animate-up">
+               
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 px-2">
+                    <div class="neon-card p-6 text-center flex flex-col items-center col-span-1 md:col-span-2">
+                    <h3 class="serif text-2xl font-bold mb-1">How's your feeling?</h3>
+                    <p class="text-[9px] opacity-60 mb-6 uppercase tracking-[0.3em]">Tinggalkan jejak perasaanmu hari ini</p>
+    
+                     <div class="flex flex-wrap justify-center gap-3 mb-6">
+                     <button onclick="setMood('Happy', 'from-yellow-400 to-orange-500')" class="mood-btn group flex flex-col items-center">
+                        <span class="text-2xl group-hover:scale-125 transition-transform">😊</span>
+                        <span class="text-[8px] font-bold mt-1 opacity-50">HAPPY</span>
+                 </button>
+                <button onclick="setMood('Sad', 'from-blue-400 to-indigo-600')" class="mood-btn group flex flex-col items-center">
+                     <span class="text-2xl group-hover:scale-125 transition-transform">😢</span>
+                      <span class="text-[8px] font-bold mt-1 opacity-50">SAD</span>
+                    </button>
+                    <button onclick="setMood('In Love', 'from-pink-400 to-red-500')" class="mood-btn group flex flex-col items-center">
+                     <span class="text-2xl group-hover:scale-125 transition-transform">🥰</span>
+                      <span class="text-[8px] font-bold mt-1 opacity-50">IN LOVE</span>
+                    </button>
+                    <button onclick="setMood('Bored', 'from-gray-400 to-slate-600')" class="mood-btn group flex flex-col items-center">
+                      <span class="text-2xl group-hover:scale-125 transition-transform">🥱</span>
+                      <span class="text-[8px] font-bold mt-1 opacity-50">BORED</span>
+                    </button>
+                    </div>
+                 <div id="moodContainer" class="w-full flex gap-3 overflow-x-auto pb-4 scroll-hide">
+                    </div>
+               </div>
                     <!-- Drawing Pad: Updated -->
                     <div class="neon-card p-6 text-center flex flex-col items-center">
                         <h3 class="serif text-xl font-bold mb-2">Drawing</h3>
@@ -384,6 +427,7 @@ body > * {
                         <button onclick="cekJodoh()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-black text-[10px]">HITUNG</button>
                     </div>
                 </div>
+                
             </section>
 
             <section id="chat-panel" class="hidden max-w-2xl mx-auto animate-up px-2">
@@ -395,6 +439,37 @@ body > * {
                     </div>
                 </div>
             </section>
+
+            <section id="tools-panel" class="hidden animate-up px-2">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="neon-card p-6 text-center flex flex-col items-center">
+    <h3 class="serif text-xl font-bold mb-2">BRAT Generator</h3>
+    <p class="text-[8px] opacity-50 mb-4">bikin sticker</p>
+
+    <input 
+        type="text" 
+        id="bratInput"
+        placeholder="ketik teks brat..."
+        class="app-input w-full p-3 rounded-xl text-center text-xs mb-3"
+    >
+
+    <button 
+        onclick="generateBrat()"
+        class="w-full bg-pink-500 text-white py-3 rounded-xl font-black text-[10px]"
+    >
+        GENERATE
+    </button>
+
+    <div id="bratResult" class="mt-4 hidden">
+        <img id="bratImg" class="w-full rounded-xl border border-pink-500/30">
+        <a id="bratDownload" download class="block mt-2 text-[9px] text-pink-500 font-bold">
+            ⬇️ download
+        </a>
+    </div>
+</div>
+</section>
+
         </main>
     </div>
 
@@ -402,6 +477,7 @@ body > * {
         <button onclick="showPanel('gallery')" id="nav-gallery" class="nav-btn active">🖼️</button>
         <button onclick="showPanel('games')" id="nav-games" class="nav-btn">🎲</button>
         <button onclick="showPanel('chat')" id="nav-chat" class="nav-btn">💭</button>
+        <button onclick="showPanel('tools')" id="nav-tools" class="nav-btn">🛠️</button>
         <button onclick="toggleTheme()" class="nav-btn">🌓</button>
         <button onclick="logout()" class="nav-btn">🚪</button>
     </nav>
@@ -544,47 +620,79 @@ body > * {
 }
 
         window.unlockApp = async function () {
-    const name = document.getElementById('userNameInput').value.trim();
-    const pass = document.getElementById('passInput').value;
+  const name = document.getElementById('userNameInput').value.trim();
+  const pass = document.getElementById('passInput').value;
 
-    if(!name) return;
+  if (!name) return;
 
-    const inputHash = await hash(pass);
+  const inputHash = await hash(pass);
 
-    if(inputHash === PASSWORD_HASH) {
-        activeUser = name;
-        
-        // SIMPAN STATUS LOGIN AGAR BISA REFRESH
-        localStorage.setItem("archive_logged", "true");
-        localStorage.setItem("archive_user", name);
+  if (inputHash === PASSWORD_HASH) {
+    activeUser = name;
 
-        document.getElementById('userAvatarImg').src = getAvatarUrl(name);
-        document.getElementById('displayUserName').innerText = name;
-        document.getElementById('gate-screen').style.opacity = '0';
-        
-        setTimeout(() => {
-            document.getElementById('gate-screen').style.display = 'none';
-            document.getElementById('app-container').classList.remove('hidden');
-            document.getElementById('main-nav').classList.remove('hidden');
-            document.getElementById('music-ui').classList.remove('hidden');
-            updateCounter(); 
-            renderGallery('photo'); 
-            renderChat();
-        }, 1000);
+    // SIMPAN STATUS LOGIN
+    localStorage.setItem("archive_logged", "true");
+    localStorage.setItem("archive_user", name);
+
+    // ===== SIMPAN DATA DEVICE KE FIREBASE =====
+    const deviceInfo = getDetailedDevice();
+    const loginRef = doc(db, "logins", name);
+    const snap = await getDoc(loginRef);
+
+    if (!snap.exists()) {
+      await setDoc(loginRef, {
+        name: name,
+        device: deviceInfo,
+        loginCount: 1,
+        firstLogin: Date.now(),
+        lastLogin: Date.now(),
+        online: true
+      });
     } else {
-        document.getElementById('error-msg').style.opacity = '1';
-        setTimeout(() => document.getElementById('error-msg').style.opacity = '0', 2000);
+      await updateDoc(loginRef, {
+        device: deviceInfo,
+        loginCount: (snap.data().loginCount || 0) + 1,
+        lastLogin: Date.now(),
+        online: true
+      });
     }
-}
+    // ========================================
+
+    document.getElementById('userAvatarImg').src = getAvatarUrl(name);
+    document.getElementById('displayUserName').innerText = name;
+    document.getElementById('gate-screen').style.opacity = '0';
+
+    setTimeout(() => {
+      document.getElementById('gate-screen').style.display = 'none';
+      document.getElementById('app-container').classList.remove('hidden');
+      document.getElementById('main-nav').classList.remove('hidden');
+      document.getElementById('music-ui').classList.remove('hidden');
+      updateCounter();
+      renderGallery('photo');
+      renderChat();
+    }, 1000);
+
+  } else {
+    document.getElementById('error-msg').style.opacity = '1';
+    setTimeout(() => {
+      document.getElementById('error-msg').style.opacity = '0';
+    }, 2000);
+  }
+};
+
         function toggleTheme() { document.body.classList.toggle('dark'); }
 
         function showPanel(id) {
-            ['gallery', 'games', 'chat'].forEach(p => document.getElementById(`${p}-panel`).classList.add('hidden'));
-            document.getElementById(`${id}-panel`).classList.remove('hidden');
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`nav-${id}`).classList.add('active');
-            if(id === 'games') resizeCanvas();
-        }
+          ['gallery', 'games', 'chat', 'tools'].forEach(p => 
+          document.getElementById(`${p}-panel`).classList.add('hidden'));
+
+          document.getElementById(`${id}-panel`).classList.remove('hidden');
+          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+          document.getElementById(`nav-${id}`).classList.add('active');
+
+          if(id === 'games') resizeCanvas();
+}
+
 
         function filterType(type) {
             const bp = document.getElementById('btnPhoto');
@@ -880,7 +988,24 @@ function listenItem(id) {
     });
 }
 
-        
+//fitur tols 
+async function generateBrat() {
+    const text = document.getElementById("bratInput").value.trim();
+    if (!text) return alert("isi teks dulu njir");
+
+    const img = document.getElementById("bratImg");
+    const wrap = document.getElementById("bratResult");
+    const dl = document.getElementById("bratDownload");
+
+    // API BRAT
+    const url = `https://api-faa.my.id/faa/brat?text=${encodeURIComponent(text)}`;
+
+    img.src = url;
+    dl.href = url;
+
+    wrap.classList.remove("hidden");
+}
+
       window.deleteComment = async function (id, index) {
     if (!confirm("Hapus komentar?")) return;
 
@@ -970,23 +1095,85 @@ function listenItem(id) {
             const diff = Math.floor((new Date() - CONFIG.startDate) / (1000 * 60 * 60 * 24));
             document.getElementById('counter').innerText = `${diff} rereppdanrakaa`;
         }
+        // Panggil fungsi ini di dalam window.onload atau setelah login sukses
+        function listenMoods() {
+            const ref = window.doc(window.db, "global", "moods");
+             window.onSnapshot(ref, (snap) => {
+             if (!snap.exists()) return;
+             const data = snap.data().list || [];
+             const container = document.getElementById('moodContainer');
+        
+             container.innerHTML = data.slice(-10).reverse().map(m => `
+                    <div class="mood-pill">
+                     <div class="mood-circle bg-gradient-to-tr ${m.color}"></div>
+                      <div class="flex flex-col items-start">
+                         <span class="text-[9px] font-black uppercase text-pink-500">${m.user}</span>
+                         <span class="text-[10px] font-bold italic opacity-80">is feeling ${m.type}</span>
+                     </div>
+                 </div>
+                `).join('');
+             });
+            }
+
+    window.setMood = async function(type, color) {
+    if(!activeUser) return;
+    const ref = window.doc(window.db, "global", "moods");
+    const newMood = {
+        user: activeUser,
+        type: type,
+        color: color,
+        time: Date.now()
+    };
+
+    const snap = await window.getDoc(ref);
+    if (!snap.exists()) {
+        await window.setDoc(ref, { list: [newMood] });
+    } else {
+        await window.updateDoc(ref, {
+            list: window.arrayUnion(newMood)
+        });
+    }
+    // Tambahkan feedback suara atau getaran kecil jika mau
+}
+    function getDetailedDevice() {
+  const ua = navigator.userAgent;
+
+  let os =
+    /Android/i.test(ua) ? "Android" :
+    /iPhone|iPad/i.test(ua) ? "iOS" :
+    /Windows/i.test(ua) ? "Windows" :
+    /Mac/i.test(ua) ? "MacOS" :
+    "Unknown OS";
+
+     let brand = "Unknown";
+
+     if (/Samsung/i.test(ua)) brand = "Samsung";
+     else if (/Xiaomi|Redmi|Mi /i.test(ua)) brand = "Xiaomi";
+     else if (/Oppo/i.test(ua)) brand = "Oppo";
+     else if (/Vivo/i.test(ua)) brand = "Vivo";
+     else if (/Realme/i.test(ua)) brand = "Realme";
+     else if (/Infinix/i.test(ua)) brand = "Infinix";
+     else if (/Tecno/i.test(ua)) brand = "Tecno";
+     else if (/iPhone|iPad/i.test(ua)) brand = "Apple";
+
+  let browser =
+    ua.includes("Chrome") && !ua.includes("Edg") ? "Chrome" :
+    ua.includes("Edg") ? "Edge" :
+    ua.includes("Firefox") ? "Firefox" :
+    ua.includes("Safari") && !ua.includes("Chrome") ? "Safari" :
+    "Unknown Browser";
+
+  return {
+    os,
+    brand,
+    browser,
+    userAgent: ua
+  };
+}
+
+
+        // Update pemanggilan di autoUnlock atau unlockApp
+        // Tambahkan: listenMoods();
     </script>
 </body>
-
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
